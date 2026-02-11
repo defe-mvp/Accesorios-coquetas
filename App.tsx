@@ -72,13 +72,13 @@ const App: React.FC = () => {
   };
 
   const fetchCategories = async () => {
-    const { data, error } = await supabase.from('categorias').select('*').order('nombre', { ascending: true });
+    const { data } = await supabase.from('categorias').select('*').order('nombre', { ascending: true });
     if (data) setCategories(data);
   };
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase.from('configuracion').select('*').eq('id', 1).single();
+      const { data } = await supabase.from('configuracion').select('*').eq('id', 1).single();
       if (data) {
         setSettings({
           whatsappNumber: data.whatsapp_number || '595994318655',
@@ -166,12 +166,12 @@ const App: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
           <div className="space-y-4">
-            <h1 className="text-6xl font-serif text-pink-900 leading-tight">Nuestras Joyas</h1>
+            <h1 className="text-6xl font-serif text-pink-900 leading-tight">Accesorios Coquetas</h1>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory('Todos')}
                 className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all ${
-                  selectedCategory === 'Todos' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-400'
+                  selectedCategory === 'Todos' ? 'bg-pink-600 text-white shadow-lg shadow-pink-100' : 'bg-pink-50 text-pink-400 hover:bg-pink-100'
                 }`}
               >
                 Todos
@@ -181,7 +181,7 @@ const App: React.FC = () => {
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.nombre)}
                   className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all ${
-                    selectedCategory === cat.nombre ? 'bg-pink-600 text-white shadow-xl shadow-pink-100' : 'bg-pink-50 text-pink-400 hover:bg-pink-100'
+                    selectedCategory === cat.nombre ? 'bg-pink-600 text-white shadow-lg shadow-pink-100' : 'bg-pink-50 text-pink-400 hover:bg-pink-100'
                   }`}
                 >
                   {cat.nombre}
@@ -192,11 +192,11 @@ const App: React.FC = () => {
 
           <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-3xl border border-gray-100">
             <div className="flex flex-col">
-              <label className="text-[9px] uppercase font-black text-gray-400 mb-1 tracking-tighter">Filtrar por</label>
+              <label className="text-[9px] uppercase font-black text-gray-400 mb-1 tracking-tighter">Ordenar por</label>
               <select 
                 value={sortBy} 
                 onChange={(e) => setSortBy(e.target.value as SortOption)} 
-                className="bg-transparent text-sm font-bold text-gray-700 outline-none"
+                className="bg-transparent text-sm font-bold text-gray-700 outline-none cursor-pointer"
               >
                 <option value="default">Personalizado</option>
                 <option value="price-asc">Menor Precio</option>
@@ -207,7 +207,7 @@ const App: React.FC = () => {
             {isLoggedIn && mode === UserMode.ADMIN && (
               <button 
                 onClick={() => setIsAddModalOpen(true)} 
-                className="bg-pink-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-black transition-all"
+                className="bg-pink-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-black transition-all shadow-md"
               >
                 + Agregar
               </button>
@@ -220,8 +220,8 @@ const App: React.FC = () => {
           mode={mode}
           onAddToCart={handleAddToCart}
           onEdit={setEditingProduct}
-          onDelete={async (id) => { if(confirm('¿Eliminar?')) { await supabase.from('productos').delete().eq('id', id); fetchProducts(); } }}
-          onReorder={async (id, dir) => { /* logic handled by fetching products usually, but kept for structure */ }}
+          onDelete={async (id) => { if(confirm('¿Deseas eliminar este producto permanentemente?')) { await supabase.from('productos').delete().eq('id', id); fetchProducts(); } }}
+          onReorder={async (id, dir) => { /* logic */ }}
           isSortingByDefault={sortBy === 'default' && selectedCategory === 'Todos'}
         />
 
@@ -246,7 +246,6 @@ const App: React.FC = () => {
           }).eq('id', 1);
           setSettings(s);
           setShowSettingsModal(false);
-          alert('¡Guardado!');
         }}
       />
 
@@ -264,8 +263,8 @@ const App: React.FC = () => {
 
       <footer className="bg-white py-20 border-t border-pink-50 text-center">
         <h2 className="text-3xl font-serif text-pink-900 mb-2">{settings.companyName}</h2>
-        <p className="text-pink-300 text-sm mb-8 italic">Hecho con amor para mujeres que brillan.</p>
-        <button onClick={() => isLoggedIn ? setMode(UserMode.ADMIN) : setShowLoginModal(true)} className="px-6 py-2 rounded-full border border-pink-50 text-[10px] text-pink-200 hover:text-pink-500 uppercase tracking-widest font-bold">Gestión Interna</button>
+        <p className="text-pink-300 text-sm mb-8 italic">Hecho con amor para resaltar tu belleza.</p>
+        <button onClick={() => isLoggedIn ? setMode(UserMode.ADMIN) : setShowLoginModal(true)} className="px-6 py-2 rounded-full border border-pink-50 text-[10px] text-pink-200 hover:text-pink-500 uppercase tracking-widest font-bold transition-all">Panel Administrativo</button>
       </footer>
     </div>
   );
