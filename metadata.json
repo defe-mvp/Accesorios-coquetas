@@ -1,0 +1,7 @@
+{
+  "name": "Accesorios Coquetas",
+  "description": "Catálogo sofisticado de accesorios para damas con gestión administrativa y pedidos vía WhatsApp.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
