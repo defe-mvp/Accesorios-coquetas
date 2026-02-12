@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { CartItem } from '../types';
+import React, { useState } from 'react';
+import { CartItem, AdminSettings, WhatsAppContact } from '../types';
 import { formatCurrency } from '../constants';
 
 interface CartDrawerProps {
@@ -8,16 +8,28 @@ interface CartDrawerProps {
   onClose: () => void;
   items: CartItem[];
   onUpdateQuantity: (id: string, delta: number) => void;
-  whatsappNumber: string;
+  settings: AdminSettings;
 }
 
-const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdateQuantity, whatsappNumber }) => {
+const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdateQuantity, settings }) => {
+  const [showContactSelection, setShowContactSelection] = useState(false);
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-  const handleCheckout = () => {
+  const handleCheckout = (contact?: WhatsAppContact) => {
     const detail = items.map(item => `- ${item.product.name} x${item.quantity} (${formatCurrency(item.product.price * item.quantity)})`).join('%0A');
-    const message = `¡Hola! Me gustaría realizar un pedido de *Accesorios Coquetas*:%0A%0A${detail}%0A%0A*Total:* ${formatCurrency(total)}`;
-    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+    const message = `¡Hola! Me gustaría realizar un pedido de *${settings.companyName}*:%0A%0A${detail}%0A%0A*Total:* ${formatCurrency(total)}`;
+    
+    const number = contact ? contact.number : settings.whatsappNumber;
+    window.open(`https://wa.me/${number}?text=${message}`, '_blank');
+    setShowContactSelection(false);
+  };
+
+  const onComprarClick = () => {
+    if (settings.whatsappContacts && settings.whatsappContacts.length > 0) {
+      setShowContactSelection(true);
+    } else {
+      handleCheckout();
+    }
   };
 
   return (
@@ -29,7 +41,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
           <button onClick={onClose} className="p-2 text-pink-400">✕</button>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-6 space-y-6">
+        <div className="flex-grow overflow-y-auto p-6 space-y-6 relative">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-400">
               <p>Tu bolsa está vacía.</p>
@@ -52,6 +64,55 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
               </div>
             ))
           )}
+
+          {/* Contact Selection Popover Overlay */}
+          {showContactSelection && (
+            <div className="absolute inset-0 z-10 bg-white/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm animate-in fade-in zoom-in">
+              <h3 className="text-xl font-serif text-pink-900 mb-2">¿Con quién quieres hablar?</h3>
+              <p className="text-xs text-pink-400 mb-6 font-medium">Contamos con varios asesores listos para ayudarte</p>
+              
+              <div className="w-full space-y-3 max-h-[60%] overflow-y-auto pr-2">
+                {settings.whatsappContacts.map((contact, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleCheckout(contact)}
+                    className="w-full bg-white border-2 border-pink-100 p-4 rounded-2xl flex items-center justify-between hover:bg-pink-50 transition-all group"
+                  >
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-pink-900 group-hover:text-pink-600">{contact.name}</p>
+                      <p className="text-[10px] text-pink-300 font-bold uppercase tracking-wider">WhatsApp Asesor</p>
+                    </div>
+                    <div className="bg-[#25D366] p-2 rounded-full shadow-sm">
+                      <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12.031 6.172c-2.32 0-4.518.892-6.193 2.512-3.418 3.3-3.418 8.651 0 11.951 1.1.1.6 3.1 3.5 2.1l2.693 2.541c.203.191.536.191.739 0l2.693-2.541c2.9 1 2.4-2 3.5-2.1 3.418-3.3 3.418-8.651 0-11.951-1.675-1.62-3.873-2.512-6.193-2.512z" /></svg>
+                    </div>
+                  </button>
+                ))}
+                
+                {/* Fallback to default if needed */}
+                {settings.whatsappNumber && (
+                  <button
+                    onClick={() => handleCheckout()}
+                    className="w-full bg-pink-50 p-4 rounded-2xl flex items-center justify-between hover:bg-pink-100 transition-all group border-2 border-transparent"
+                  >
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-pink-900">Linea General</p>
+                      <p className="text-[10px] text-pink-300 font-bold uppercase tracking-wider">Atención al cliente</p>
+                    </div>
+                    <div className="bg-pink-600 p-2 rounded-full shadow-sm">
+                      <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12.031 6.172c-2.32 0-4.518.892-6.193 2.512-3.418 3.3-3.418 8.651 0 11.951 1.1.1.6 3.1 3.5 2.1l2.693 2.541c.203.191.536.191.739 0l2.693-2.541c2.9 1 2.4-2 3.5-2.1 3.418-3.3 3.418-8.651 0-11.951-1.675-1.62-3.873-2.512-6.193-2.512z" /></svg>
+                    </div>
+                  </button>
+                )}
+              </div>
+              
+              <button 
+                onClick={() => setShowContactSelection(false)} 
+                className="mt-8 text-xs font-bold text-gray-400 hover:text-pink-600 uppercase tracking-widest"
+              >
+                Volver al Carrito
+              </button>
+            </div>
+          )}
         </div>
 
         {items.length > 0 && (
@@ -61,8 +122,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
               <span className="text-2xl font-serif">{formatCurrency(total)}</span>
             </div>
             <button 
-              onClick={handleCheckout}
-              className="w-full bg-[#25D366] text-white py-4 rounded-xl font-bold hover:bg-[#20ba5a] transition-all flex items-center justify-center gap-2 shadow-lg"
+              onClick={onComprarClick}
+              className="w-full bg-[#25D366] text-white py-4 rounded-xl font-bold hover:bg-[#20ba5a] transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95 transform"
             >
               <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M12.031 6.172c-2.32 0-4.518.892-6.193 2.512-3.418 3.3-3.418 8.651 0 11.951 1.1.1.6 3.1 3.5 2.1l2.693 2.541c.203.191.536.191.739 0l2.693-2.541c2.9 1 2.4-2 3.5-2.1 3.418-3.3 3.418-8.651 0-11.951-1.675-1.62-3.873-2.512-6.193-2.512z" /></svg>
               Comprar vía WhatsApp

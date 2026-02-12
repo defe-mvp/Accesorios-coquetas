@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Product, CartItem, UserMode, SortOption, AdminSettings, Category } from './types';
 import { supabase } from './supabaseClient';
 import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import ProductGrid from './components/ProductGrid';
 import ProductModal from './components/ProductModal';
 import CartDrawer from './components/CartDrawer';
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('default');
@@ -26,11 +28,29 @@ const App: React.FC = () => {
   
   const [settings, setSettings] = useState<AdminSettings>({
     whatsappNumber: '595994318655',
+    whatsappContacts: [],
     companyName: 'Accesorios Coquetas',
     instagramUrl: '',
     facebookUrl: '',
     tiktokUrl: ''
   });
+
+  // Cargar Carrito desde LocalStorage al iniciar
+  useEffect(() => {
+    const savedCart = localStorage.getItem('coquetas_cart');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (e) {
+        console.error("Error cargando carrito persistente", e);
+      }
+    }
+  }, []);
+
+  // Guardar Carrito en LocalStorage cuando cambie
+  useEffect(() => {
+    localStorage.setItem('coquetas_cart', JSON.stringify(cart));
+  }, [cart]);
 
   useEffect(() => {
     fetchProducts();
@@ -82,6 +102,7 @@ const App: React.FC = () => {
       if (data) {
         setSettings({
           whatsappNumber: data.whatsapp_number || '595994318655',
+          whatsappContacts: data.whatsapp_contacts || [],
           companyName: data.nombre_empresa || 'Accesorios Coquetas',
           instagramUrl: data.instagram_url || '',
           facebookUrl: data.facebook_url || '',
@@ -158,36 +179,29 @@ const App: React.FC = () => {
         mode={mode} 
         cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         onOpenCart={() => setIsCartOpen(true)}
+        onOpenMenu={() => setIsSidebarOpen(true)}
         isAdmin={isLoggedIn}
         onOpenSettings={() => setShowSettingsModal(true)}
         onLogout={async () => { await supabase.auth.signOut(); setIsLoggedIn(false); setMode(UserMode.CLIENT); }}
+      />
+
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        categories={categories} 
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
       />
       
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
           <div className="space-y-4">
-            <h1 className="text-6xl font-serif text-pink-900 leading-tight">Accesorios Coquetas</h1>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCategory('Todos')}
-                className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all ${
-                  selectedCategory === 'Todos' ? 'bg-pink-600 text-white shadow-lg shadow-pink-100' : 'bg-pink-50 text-pink-400 hover:bg-pink-100'
-                }`}
-              >
-                Todos
-              </button>
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.nombre)}
-                  className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all ${
-                    selectedCategory === cat.nombre ? 'bg-pink-600 text-white shadow-lg shadow-pink-100' : 'bg-pink-50 text-pink-400 hover:bg-pink-100'
-                  }`}
-                >
-                  {cat.nombre}
-                </button>
-              ))}
-            </div>
+            <h1 className="text-4xl md:text-6xl font-serif text-pink-900 leading-tight">
+              {selectedCategory === 'Todos' ? 'Nuestras Joyas' : selectedCategory}
+            </h1>
+            <p className="text-gray-400 text-sm md:text-base font-medium max-w-lg">
+              Descubre accesorios exclusivos diseñados para realzar tu belleza en cada ocasión.
+            </p>
           </div>
 
           <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-3xl border border-gray-100">
@@ -237,15 +251,23 @@ const App: React.FC = () => {
         onClose={() => setShowSettingsModal(false)}
         onRefreshCategories={fetchCategories}
         onSave={async (s) => {
-          await supabase.from('configuracion').update({ 
+          // Aseguramos que whatsapp_contacts se guarde en la BD
+          const { error } = await supabase.from('configuracion').update({ 
             whatsapp_number: s.whatsappNumber,
+            whatsapp_contacts: s.whatsappContacts,
             instagram_url: s.instagramUrl,
             facebook_url: s.facebookUrl,
             tiktok_url: s.tiktokUrl,
             nombre_empresa: s.companyName
           }).eq('id', 1);
-          setSettings(s);
-          setShowSettingsModal(false);
+          
+          if (error) {
+            console.error("Error guardando configuracion", error);
+            alert("No se pudo guardar la configuración en la base de datos.");
+          } else {
+            setSettings(s);
+            setShowSettingsModal(false);
+          }
         }}
       />
 
@@ -259,7 +281,7 @@ const App: React.FC = () => {
         />
       )}
 
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cart} onUpdateQuantity={handleUpdateCartQuantity} whatsappNumber={settings.whatsappNumber} />
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cart} onUpdateQuantity={handleUpdateCartQuantity} settings={settings} />
 
       <footer className="bg-white py-20 border-t border-pink-50 text-center">
         <h2 className="text-3xl font-serif text-pink-900 mb-2">{settings.companyName}</h2>

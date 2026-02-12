@@ -13,6 +13,12 @@ export interface Product {
 export interface Category {
   id: number;
   nombre: string;
+  imagen_url?: string;
+}
+
+export interface WhatsAppContact {
+  name: string;
+  number: string;
 }
 
 export interface CartItem {
@@ -29,6 +35,7 @@ export enum UserMode {
 
 export interface AdminSettings {
   whatsappNumber: string;
+  whatsappContacts: WhatsAppContact[];
   companyName: string;
   instagramUrl?: string;
   facebookUrl?: string;

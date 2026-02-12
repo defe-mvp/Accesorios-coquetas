@@ -63,26 +63,27 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
 
   if (!isOpen) return null;
 
-  // Clases mejoradas según petición
   const inputClass = "w-full bg-white border border-gray-300 p-4 rounded-xl text-black placeholder:text-gray-200 focus:ring-2 focus:ring-pink-200 focus:border-pink-400 outline-none transition-all shadow-sm";
   const labelClass = "block text-xs font-bold uppercase text-gray-700 mb-2 ml-1 tracking-wider";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-white rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl my-8">
-        <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-6">
-          <div className="flex justify-between items-center border-b border-gray-100 pb-6">
-            <div>
-              <h2 className="text-3xl font-serif text-pink-900">{product ? 'Editar' : 'Nuevo'} Producto</h2>
-              <p className="text-gray-400 text-xs mt-1">Completa los detalles del accesorio</p>
-            </div>
-            <button type="button" onClick={onClose} className="text-gray-400 hover:text-pink-600 transition-colors p-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+      <div className="bg-white rounded-[2rem] w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] my-auto overflow-hidden">
+        {/* Header Fijo */}
+        <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center shrink-0">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-serif text-pink-900">{product ? 'Editar' : 'Nuevo'} Producto</h2>
+            <p className="text-gray-400 text-xs mt-1">Completa los detalles del accesorio</p>
           </div>
-          
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-pink-600 transition-colors p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Contenido con Scroll */}
+        <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-6 md:p-10 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
               <label className={labelClass}>Nombre del Accesorio</label>
@@ -169,24 +170,26 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
               </label>
             </div>
           </div>
-
-          <div className="flex gap-4 pt-6 border-t border-gray-100">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl font-bold hover:bg-gray-200 transition-all"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              disabled={isUploading} 
-              className="flex-[2] bg-pink-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-pink-100 hover:bg-pink-700 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {product ? 'Guardar Cambios' : 'Crear Producto'}
-            </button>
-          </div>
         </form>
+
+        {/* Footer Fijo */}
+        <div className="p-6 md:p-8 border-t border-gray-100 flex gap-4 shrink-0 bg-white">
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl font-bold hover:bg-gray-200 transition-all"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button"
+            onClick={handleSubmit}
+            disabled={isUploading} 
+            className="flex-[2] bg-pink-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-pink-100 hover:bg-pink-700 active:scale-[0.98] transition-all disabled:opacity-50"
+          >
+            {product ? 'Guardar Cambios' : 'Crear Producto'}
+          </button>
+        </div>
       </div>
     </div>
   );
