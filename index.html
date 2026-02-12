@@ -6,13 +6,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Accesorios Coquetas</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Inter', sans-serif;
+      /* Liquid Gradient Background */
+      background-color: #fdf2f8;
+      background-image: 
+        radial-gradient(at 0% 0%, hsla(330,80%,94%,1) 0, transparent 50%), 
+        radial-gradient(at 50% 0%, hsla(310,60%,96%,1) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, hsla(340,90%,95%,1) 0, transparent 50%),
+        radial-gradient(at 100% 100%, hsla(300,50%,92%,1) 0, transparent 50%),
+        radial-gradient(at 0% 100%, hsla(350,60%,94%,1) 0, transparent 50%);
+      background-attachment: fixed;
+      background-size: cover;
+      min-height: 100vh;
     }
     .font-serif {
       font-family: 'Playfair Display', serif;
+    }
+    
+    /* GLASSMORPHISM UTILITIES */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 32px 0 rgba(255, 182, 193, 0.15);
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.08);
+    }
+
+    .glass-input {
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(4px);
+    }
+
+    /* Scrollbar refinement */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(236, 72, 153, 0.3);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(236, 72, 153, 0.5);
     }
   </style>
 <script type="importmap">
@@ -26,9 +75,8 @@
 }
 </script>
 </head>
-<body class="bg-white text-gray-900">
+<body class="text-gray-900 antialiased">
   <div id="root"></div>
-  <!-- CRITICAL: Added script entry point -->
   <script type="module" src="./index.tsx"></script>
 </body>
 </html>

@@ -72,49 +72,51 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
     });
   };
 
+  const inputClass = "w-full glass-input p-3 rounded-xl text-pink-900 placeholder:text-pink-300 outline-none focus:bg-white/60 transition-all text-sm";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] my-auto overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-pink-900/10 backdrop-blur-md p-4 overflow-y-auto">
+      <div className="glass-panel rounded-[2.5rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] my-auto overflow-hidden">
         {/* Header Fijo */}
-        <div className="p-6 md:p-10 border-b border-gray-100 flex justify-between items-center shrink-0">
-          <h2 className="text-2xl md:text-3xl font-serif text-pink-900">Configuración</h2>
-          <button onClick={onClose} className="text-gray-300 hover:text-pink-600 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="p-8 border-b border-white/40 flex justify-between items-center shrink-0">
+          <h2 className="text-3xl font-serif text-pink-900">Configuración</h2>
+          <button onClick={onClose} className="text-pink-300 hover:text-pink-600 transition-colors glass-button rounded-full p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Contenido con Scroll */}
-        <div className="flex-grow overflow-y-auto p-6 md:p-10 space-y-10">
+        <div className="flex-grow overflow-y-auto p-8 space-y-10 custom-scrollbar">
           {/* CATEGORIAS */}
           <div className="space-y-6">
-            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-pink-50 pb-3">Gestión de Categorías</h3>
+            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-white/30 pb-3">Gestión de Categorías</h3>
             <div className="flex gap-2">
               <input 
                 type="text" 
                 placeholder="Nombre de nueva categoría..."
-                className="flex-grow p-3 bg-pink-50 rounded-xl border-none outline-none text-pink-900 placeholder:text-pink-200"
+                className="flex-grow glass-input p-3 rounded-xl border-none outline-none text-pink-900 placeholder:text-pink-300 text-sm"
                 value={newCat}
                 onChange={e => setNewCat(e.target.value)}
               />
               <button 
                 onClick={handleAddCategory}
                 disabled={isProcessing}
-                className="bg-pink-600 text-white px-5 rounded-xl font-bold hover:bg-pink-700 disabled:opacity-50"
+                className="bg-pink-500 text-white px-5 rounded-xl font-bold hover:bg-pink-600 disabled:opacity-50 shadow-md"
               >
                 +
               </button>
             </div>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {categories.map(cat => (
-                <div key={cat.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <div key={cat.id} className="flex items-center justify-between glass-card p-2 rounded-2xl">
                   <div className="flex items-center gap-3">
-                    <label className="relative w-12 h-8 bg-pink-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border border-pink-200">
+                    <label className="relative w-12 h-10 bg-pink-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border border-pink-200">
                       {cat.imagen_url ? (
                         <img src={cat.imagen_url} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="flex items-center justify-center h-full text-[10px] text-pink-300">Img</div>
+                        <div className="flex items-center justify-center h-full text-[9px] text-pink-300 font-bold uppercase">Img</div>
                       )}
                       <input 
                         type="file" 
@@ -124,9 +126,9 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
                         disabled={isProcessing}
                       />
                     </label>
-                    <span className="text-sm font-bold text-gray-700">{cat.nombre}</span>
+                    <span className="text-sm font-bold text-pink-900">{cat.nombre}</span>
                   </div>
-                  <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-300 hover:text-red-600 p-2">
+                  <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-400 hover:text-red-600 p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -137,39 +139,39 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-pink-50 pb-3">Contactos de WhatsApp</h3>
+            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-white/30 pb-3">Contactos de WhatsApp</h3>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input 
                   type="text" 
                   placeholder="Nombre Vendedor"
                   value={newContact.name}
                   onChange={e => setNewContact({...newContact, name: e.target.value})}
-                  className="p-3 bg-pink-50 rounded-xl outline-none text-sm text-pink-900"
+                  className={inputClass}
                 />
                 <input 
                   type="text" 
                   placeholder="Número (595...)"
                   value={newContact.number}
                   onChange={e => setNewContact({...newContact, number: e.target.value})}
-                  className="p-3 bg-pink-50 rounded-xl outline-none text-sm text-pink-900"
+                  className={inputClass}
                 />
               </div>
               <button 
                 onClick={handleAddContact}
-                className="w-full py-2 bg-pink-100 text-pink-600 rounded-xl font-bold text-xs uppercase hover:bg-pink-200 transition-colors"
+                className="w-full py-3 bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 rounded-xl font-bold text-xs uppercase transition-colors border border-pink-200"
               >
                 + Añadir Contacto
               </button>
               
               <div className="space-y-2">
                 {data.whatsappContacts.map((contact, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <div key={idx} className="flex items-center justify-between glass-card p-3 rounded-xl">
                     <div>
-                      <p className="text-xs font-bold text-gray-800">{contact.name}</p>
-                      <p className="text-[10px] text-gray-400">{contact.number}</p>
+                      <p className="text-xs font-bold text-pink-900">{contact.name}</p>
+                      <p className="text-[10px] text-pink-400">{contact.number}</p>
                     </div>
-                    <button onClick={() => handleRemoveContact(idx)} className="text-red-300 hover:text-red-500">
+                    <button onClick={() => handleRemoveContact(idx)} className="text-red-300 hover:text-red-500 p-1">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -181,51 +183,51 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-pink-50 pb-3">Información de Negocio</h3>
+            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-white/30 pb-3">Información de Negocio</h3>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="text-[10px] font-black uppercase text-gray-400 block mb-2 ml-1">WhatsApp Principal (Legacy)</label>
+                <label className="text-[10px] font-black uppercase text-pink-300 block mb-2 ml-1">WhatsApp Principal (Legacy)</label>
                 <input 
                   type="text" 
                   value={data.whatsappNumber}
                   onChange={e => setData({...data, whatsappNumber: e.target.value})}
-                  className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:ring-2 focus:ring-pink-100 transition-all text-sm"
+                  className={inputClass}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase text-gray-400 block mb-2 ml-1">Nombre de la Empresa</label>
+                <label className="text-[10px] font-black uppercase text-pink-300 block mb-2 ml-1">Nombre de la Empresa</label>
                 <input 
                   type="text" 
                   value={data.companyName}
                   onChange={e => setData({...data, companyName: e.target.value})}
-                  className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:ring-2 focus:ring-pink-100 transition-all text-sm"
+                  className={inputClass}
                 />
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-pink-50 pb-3">Redes Sociales</h3>
+            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-white/30 pb-3">Redes Sociales</h3>
             <div className="space-y-3">
               <input 
                 type="text" 
                 value={data.instagramUrl || ''}
                 onChange={e => setData({...data, instagramUrl: e.target.value})}
-                className="w-full p-3 bg-gray-50 rounded-xl border-none outline-none text-sm"
+                className={inputClass}
                 placeholder="Instagram URL"
               />
               <input 
                 type="text" 
                 value={data.facebookUrl || ''}
                 onChange={e => setData({...data, facebookUrl: e.target.value})}
-                className="w-full p-3 bg-gray-50 rounded-xl border-none outline-none text-sm"
+                className={inputClass}
                 placeholder="Facebook URL"
               />
               <input 
                 type="text" 
                 value={data.tiktokUrl || ''}
                 onChange={e => setData({...data, tiktokUrl: e.target.value})}
-                className="w-full p-3 bg-gray-50 rounded-xl border-none outline-none text-sm"
+                className={inputClass}
                 placeholder="TikTok URL"
               />
             </div>
@@ -233,9 +235,9 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
         </div>
         
         {/* Footer Fijo */}
-        <div className="p-6 md:p-10 border-t border-pink-50 flex gap-4 shrink-0 bg-white">
-          <button onClick={onClose} className="flex-1 py-4 text-gray-400 font-bold hover:text-gray-600 transition-colors">Cancelar</button>
-          <button onClick={() => onSave(data)} className="flex-[2] py-4 bg-pink-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-xl shadow-pink-100">Guardar Todo</button>
+        <div className="p-8 border-t border-white/40 flex gap-4 shrink-0 bg-white/20 backdrop-blur-sm">
+          <button onClick={onClose} className="flex-1 py-4 text-pink-400 font-bold hover:text-pink-600 transition-colors text-xs uppercase tracking-widest">Cancelar</button>
+          <button onClick={() => onSave(data)} className="flex-[2] py-4 bg-pink-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-xl shadow-pink-200 text-xs uppercase tracking-widest">Guardar Todo</button>
         </div>
       </div>
     </div>

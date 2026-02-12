@@ -30,15 +30,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ isOpen, onClose, onLoginSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-white p-4">
-      <div className="w-full max-w-sm">
-        <h2 className="text-2xl font-serif text-pink-900 text-center mb-2">🔐 Acceso Administrativo</h2>
-        <p className="text-gray-400 text-xs text-center mb-8">Ingresa con tu cuenta de administrador de Supabase</p>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-pink-900/10 backdrop-blur-md p-6">
+      <div className="w-full max-w-sm glass-panel rounded-[2.5rem] p-10 shadow-2xl">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-200">
+            <span className="text-2xl">🔐</span>
+          </div>
+          <h2 className="text-2xl font-serif text-pink-900">Acceso Admin</h2>
+          <p className="text-pink-400 text-xs font-bold mt-2 tracking-wide uppercase">Solo personal autorizado</p>
+        </div>
+
         <form onSubmit={handleLogin} className="space-y-4">
           <input 
             type="email" 
             placeholder="Correo electrónico" 
-            className="w-full p-4 bg-pink-50 rounded-xl outline-none focus:ring-2 focus:ring-pink-200 transition-all"
+            className="w-full glass-input p-4 rounded-xl text-pink-900 placeholder:text-pink-300 outline-none focus:bg-white/60 transition-all text-sm"
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
@@ -46,21 +52,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ isOpen, onClose, onLoginSuccess
           <input 
             type="password" 
             placeholder="Contraseña" 
-            className="w-full p-4 bg-pink-50 rounded-xl outline-none focus:ring-2 focus:ring-pink-200 transition-all"
+            className="w-full glass-input p-4 rounded-xl text-pink-900 placeholder:text-pink-300 outline-none focus:bg-white/60 transition-all text-sm"
             value={pass}
             onChange={e => setPass(e.target.value)}
             required
           />
           {error && (
-            <div className="p-3 bg-red-50 text-red-500 text-xs rounded-lg text-center border border-red-100">
+            <div className="p-3 bg-red-100/50 backdrop-blur-sm text-red-500 text-xs rounded-xl text-center border border-red-200 font-medium">
               {error}
             </div>
           )}
-          <button className="w-full bg-pink-600 text-white p-4 rounded-xl font-bold hover:bg-pink-700 shadow-lg shadow-pink-100 transition-all transform active:scale-95">
-            Entrar al Panel
+          <button className="w-full bg-pink-600/90 text-white p-4 rounded-xl font-bold hover:bg-pink-700 shadow-lg shadow-pink-200 transition-all transform active:scale-95 uppercase tracking-widest text-xs mt-4">
+            Entrar
           </button>
-          <button type="button" onClick={onClose} className="w-full text-gray-400 text-sm hover:text-gray-600 transition-colors">
-            Volver al catálogo
+          <button type="button" onClick={onClose} className="w-full text-pink-400 text-xs hover:text-pink-600 transition-colors mt-4 font-bold uppercase tracking-wider">
+            Cancelar
           </button>
         </form>
       </div>

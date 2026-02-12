@@ -35,7 +35,6 @@ const App: React.FC = () => {
     tiktokUrl: ''
   });
 
-  // Cargar Carrito desde LocalStorage al iniciar
   useEffect(() => {
     const savedCart = localStorage.getItem('coquetas_cart');
     if (savedCart) {
@@ -47,7 +46,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Guardar Carrito en LocalStorage cuando cambie
   useEffect(() => {
     localStorage.setItem('coquetas_cart', JSON.stringify(cart));
   }, [cart]);
@@ -174,7 +172,12 @@ const App: React.FC = () => {
   }, [products, sortBy, selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Decorative Blobs */}
+      <div className="fixed -top-40 -left-40 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse pointer-events-none"></div>
+      <div className="fixed top-20 right-0 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse pointer-events-none" style={{animationDelay: '1s'}}></div>
+      <div className="fixed -bottom-20 left-40 w-96 h-96 bg-yellow-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse pointer-events-none" style={{animationDelay: '2s'}}></div>
+
       <Header 
         mode={mode} 
         cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
@@ -193,37 +196,37 @@ const App: React.FC = () => {
         onSelectCategory={setSelectedCategory}
       />
       
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+      <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-serif text-pink-900 leading-tight">
-              {selectedCategory === 'Todos' ? 'Nuestras Joyas' : selectedCategory}
+            <h1 className="text-5xl md:text-7xl font-serif text-pink-900 leading-tight drop-shadow-sm tracking-tight">
+              {selectedCategory === 'Todos' ? 'Colección Exclusiva' : selectedCategory}
             </h1>
-            <p className="text-gray-400 text-sm md:text-base font-medium max-w-lg">
-              Descubre accesorios exclusivos diseñados para realzar tu belleza en cada ocasión.
+            <p className="text-pink-400 text-lg font-medium max-w-lg leading-relaxed">
+              Descubre accesorios diseñados para realzar tu belleza natural con un toque de elegancia.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-3xl border border-gray-100">
+          <div className="flex items-center gap-4 glass-panel px-6 py-3 rounded-full">
             <div className="flex flex-col">
-              <label className="text-[9px] uppercase font-black text-gray-400 mb-1 tracking-tighter">Ordenar por</label>
+              <label className="text-[9px] uppercase font-black text-pink-400 mb-0.5 tracking-widest">Ordenar por</label>
               <select 
                 value={sortBy} 
                 onChange={(e) => setSortBy(e.target.value as SortOption)} 
-                className="bg-transparent text-sm font-bold text-gray-700 outline-none cursor-pointer"
+                className="bg-transparent text-sm font-bold text-pink-900 outline-none cursor-pointer border-none p-0 focus:ring-0 w-32"
               >
-                <option value="default">Personalizado</option>
+                <option value="default">Recomendados</option>
                 <option value="price-asc">Menor Precio</option>
                 <option value="price-desc">Mayor Precio</option>
-                <option value="name-az">A-Z</option>
+                <option value="name-az">Nombre A-Z</option>
               </select>
             </div>
             {isLoggedIn && mode === UserMode.ADMIN && (
               <button 
                 onClick={() => setIsAddModalOpen(true)} 
-                className="bg-pink-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-black transition-all shadow-md"
+                className="ml-4 bg-pink-500/90 backdrop-blur-sm text-white px-5 py-2 rounded-xl font-bold hover:bg-pink-600 transition-all shadow-lg shadow-pink-200"
               >
-                + Agregar
+                + Nuevo
               </button>
             )}
           </div>
@@ -251,7 +254,6 @@ const App: React.FC = () => {
         onClose={() => setShowSettingsModal(false)}
         onRefreshCategories={fetchCategories}
         onSave={async (s) => {
-          // Aseguramos que whatsapp_contacts se guarde en la BD
           const { error } = await supabase.from('configuracion').update({ 
             whatsapp_number: s.whatsappNumber,
             whatsapp_contacts: s.whatsappContacts,
@@ -283,10 +285,10 @@ const App: React.FC = () => {
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cart} onUpdateQuantity={handleUpdateCartQuantity} settings={settings} />
 
-      <footer className="bg-white py-20 border-t border-pink-50 text-center">
+      <footer className="relative z-10 py-12 text-center mt-20 border-t border-white/40 bg-white/20 backdrop-blur-lg">
         <h2 className="text-3xl font-serif text-pink-900 mb-2">{settings.companyName}</h2>
-        <p className="text-pink-300 text-sm mb-8 italic">Hecho con amor para resaltar tu belleza.</p>
-        <button onClick={() => isLoggedIn ? setMode(UserMode.ADMIN) : setShowLoginModal(true)} className="px-6 py-2 rounded-full border border-pink-50 text-[10px] text-pink-200 hover:text-pink-500 uppercase tracking-widest font-bold transition-all">Panel Administrativo</button>
+        <p className="text-pink-400 text-sm mb-8 font-medium">Hecho con amor para resaltar tu belleza.</p>
+        <button onClick={() => isLoggedIn ? setMode(UserMode.ADMIN) : setShowLoginModal(true)} className="px-6 py-2 rounded-full border border-pink-200 text-[10px] text-pink-400 hover:bg-pink-50 hover:text-pink-600 uppercase tracking-widest font-bold transition-all">Panel Administrativo</button>
       </footer>
     </div>
   );

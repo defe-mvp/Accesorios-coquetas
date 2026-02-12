@@ -63,30 +63,30 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
 
   if (!isOpen) return null;
 
-  const inputClass = "w-full bg-white border border-gray-300 p-4 rounded-xl text-black placeholder:text-gray-200 focus:ring-2 focus:ring-pink-200 focus:border-pink-400 outline-none transition-all shadow-sm";
-  const labelClass = "block text-xs font-bold uppercase text-gray-700 mb-2 ml-1 tracking-wider";
+  const inputClass = "w-full glass-input p-4 rounded-xl text-pink-900 placeholder:text-pink-300 outline-none focus:bg-white/60 transition-all text-sm font-medium";
+  const labelClass = "block text-[10px] font-black uppercase text-pink-400 mb-2 ml-1 tracking-widest";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-white rounded-[2rem] w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] my-auto overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-pink-900/10 backdrop-blur-md p-4 overflow-y-auto">
+      <div className="glass-panel rounded-[2.5rem] w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] my-auto overflow-hidden">
         {/* Header Fijo */}
-        <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center shrink-0">
+        <div className="p-8 border-b border-white/40 flex justify-between items-center shrink-0">
           <div>
-            <h2 className="text-2xl md:text-3xl font-serif text-pink-900">{product ? 'Editar' : 'Nuevo'} Producto</h2>
-            <p className="text-gray-400 text-xs mt-1">Completa los detalles del accesorio</p>
+            <h2 className="text-3xl font-serif text-pink-900">{product ? 'Editar' : 'Nuevo'} Accesorio</h2>
+            <p className="text-pink-400 text-xs mt-1 font-bold tracking-wide">Gestión de catálogo</p>
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-pink-600 transition-colors p-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <button type="button" onClick={onClose} className="text-pink-300 hover:text-pink-600 transition-colors p-2 glass-button rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Contenido con Scroll */}
-        <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-6 md:p-10 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-8 space-y-6 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
-              <label className={labelClass}>Nombre del Accesorio</label>
+              <label className={labelClass}>Nombre</label>
               <input 
                 type="text" 
                 placeholder="Ej: Aros de Gala" 
@@ -114,7 +114,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
-              <label className={labelClass}>Precio (Guaraníes)</label>
+              <label className={labelClass}>Precio (Gs)</label>
               <input 
                 type="number" 
                 placeholder="0" 
@@ -125,7 +125,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
               />
             </div>
             <div className="space-y-1">
-              <label className={labelClass}>Cantidad en Stock</label>
+              <label className={labelClass}>Stock</label>
               <input 
                 type="number" 
                 placeholder="0" 
@@ -138,9 +138,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
           </div>
 
           <div className="space-y-1">
-            <label className={labelClass}>Descripción del Producto</label>
+            <label className={labelClass}>Descripción</label>
             <textarea 
-              placeholder="Ej: Material acero quirúrgico, tamaño 2cm..." 
+              placeholder="Detalles del producto..." 
               rows={3} 
               value={formData.description} 
               onChange={e => setFormData({...formData, description: e.target.value})} 
@@ -149,35 +149,34 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
           </div>
 
           <div className="space-y-3">
-            <label className={labelClass}>Fotos del Producto</label>
+            <label className={labelClass}>Galería</label>
             <div className="flex flex-wrap gap-4">
               {formData.images?.map((url, i) => (
-                <div key={i} className="relative w-20 h-20 group">
-                  <img src={url} className="w-full h-full object-cover rounded-xl border border-gray-200" />
+                <div key={i} className="relative w-24 h-24 group">
+                  <img src={url} className="w-full h-full object-cover rounded-2xl border border-white/50 shadow-sm" />
                   <button 
                     type="button" 
                     onClick={() => setFormData({...formData, images: formData.images?.filter((_, idx) => idx !== i)})} 
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-lg"
+                    className="absolute -top-2 -right-2 bg-red-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md hover:bg-red-500 transition-colors"
                   >
                     ×
                   </button>
                 </div>
               ))}
-              <label className="w-20 h-20 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-pink-300 transition-all text-gray-400">
+              <label className="w-24 h-24 border-2 border-dashed border-pink-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-pink-50 transition-all text-pink-300 hover:text-pink-500">
                 <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={isUploading} />
-                <span className="text-xl font-bold">{isUploading ? '...' : '+'}</span>
-                <span className="text-[8px] font-bold uppercase mt-1">Subir</span>
+                <span className="text-2xl font-light">{isUploading ? '...' : '+'}</span>
               </label>
             </div>
           </div>
         </form>
 
         {/* Footer Fijo */}
-        <div className="p-6 md:p-8 border-t border-gray-100 flex gap-4 shrink-0 bg-white">
+        <div className="p-8 border-t border-white/40 flex gap-4 shrink-0 bg-white/10 backdrop-blur-sm">
           <button 
             type="button" 
             onClick={onClose} 
-            className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl font-bold hover:bg-gray-200 transition-all"
+            className="flex-1 py-4 text-pink-400 font-bold hover:text-pink-600 transition-colors text-xs uppercase tracking-widest"
           >
             Cancelar
           </button>
@@ -185,7 +184,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
             type="button"
             onClick={handleSubmit}
             disabled={isUploading} 
-            className="flex-[2] bg-pink-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-pink-100 hover:bg-pink-700 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="flex-[2] bg-pink-500/90 text-white py-4 rounded-2xl font-bold shadow-lg shadow-pink-200 hover:bg-pink-600 active:scale-[0.98] transition-all disabled:opacity-50 text-xs uppercase tracking-widest backdrop-blur-sm"
           >
             {product ? 'Guardar Cambios' : 'Crear Producto'}
           </button>
