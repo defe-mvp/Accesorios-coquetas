@@ -8,10 +8,11 @@ interface CartDrawerProps {
   onClose: () => void;
   items: CartItem[];
   onUpdateQuantity: (id: string, delta: number) => void;
+  onClearCart: () => void;
   settings: AdminSettings;
 }
 
-const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdateQuantity, settings }) => {
+const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdateQuantity, onClearCart, settings }) => {
   const [showContactSelection, setShowContactSelection] = useState(false);
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
@@ -29,6 +30,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
       setShowContactSelection(true);
     } else {
       handleCheckout();
+    }
+  };
+
+  const handleClearClick = () => {
+    if (confirm('¿Estás seguro de que deseas vaciar toda tu bolsa de compras?')) {
+      onClearCart();
     }
   };
 
@@ -86,12 +93,18 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
 
         {/* Footer (Total y Botón) */}
         {items.length > 0 && (
-          <div className="p-8 border-t border-white/30 space-y-6 shrink-0">
+          <div className="p-8 border-t border-white/30 space-y-4 shrink-0">
             <div className="flex justify-between items-end">
               <div>
                 <span className="uppercase text-[9px] font-black text-pink-400 tracking-widest">Total Estimado</span>
                 <p className="text-3xl font-serif text-pink-900 leading-none mt-2">{formatCurrency(total)}</p>
               </div>
+              <button 
+                onClick={handleClearClick}
+                className="text-[9px] font-black text-pink-300 hover:text-red-400 uppercase tracking-widest transition-colors mb-1"
+              >
+                Limpiar Bolsa
+              </button>
             </div>
             <button 
               onClick={onComprarClick}

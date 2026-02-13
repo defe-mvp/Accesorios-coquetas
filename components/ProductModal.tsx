@@ -37,23 +37,63 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
     }
   }, [product, categories]);
 
+  // FIX: Función para convertir imagen a WebP
+  const convertToWebP = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Conversion error'));
+          }, 'image/webp', 0.8);
+        };
+      };
+    });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    const fileName = `${Date.now()}_${file.name}`;
-    
-    const { data, error } = await supabase.storage.from('catalogo').upload(fileName, file);
+    try {
+      const webpBlob = await convertToWebP(file);
+      const fileName = `${Date.now()}_${file.name.split('.')[0]}.webp`;
+      
+      const { data, error } = await supabase.storage.from('catalogo').upload(fileName, webpBlob, {
+        contentType: 'image/webp'
+      });
 
-    if (!error && data) {
-      const { data: { publicUrl } } = supabase.storage.from('catalogo').getPublicUrl(data.path);
-      setFormData(prev => ({
-        ...prev,
-        images: [...(prev.images || []), publicUrl]
-      }));
+      if (!error && data) {
+        const { data: { publicUrl } } = supabase.storage.from('catalogo').getPublicUrl(data.path);
+        setFormData(prev => ({
+          ...prev,
+          images: [...(prev.images || []), publicUrl]
+        }));
+      }
+    } catch (err) {
+      console.error("Upload error", err);
+    } finally {
+      setIsUploading(false);
     }
-    setIsUploading(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -69,7 +109,6 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-pink-900/10 backdrop-blur-md p-4 overflow-y-auto">
       <div className="glass-panel rounded-[2.5rem] w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] my-auto overflow-hidden">
-        {/* Header Fijo */}
         <div className="p-8 border-b border-white/40 flex justify-between items-center shrink-0">
           <div>
             <h2 className="text-3xl font-serif text-pink-900">{product ? 'Editar' : 'Nuevo'} Accesorio</h2>
@@ -82,7 +121,6 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
           </button>
         </div>
 
-        {/* Contenido con Scroll */}
         <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-8 space-y-6 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
@@ -149,7 +187,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
           </div>
 
           <div className="space-y-3">
-            <label className={labelClass}>Galería</label>
+            <label className={labelClass}>Galería (Auto WebP)</label>
             <div className="flex flex-wrap gap-4">
               {formData.images?.map((url, i) => (
                 <div key={i} className="relative w-24 h-24 group">
@@ -171,7 +209,6 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
           </div>
         </form>
 
-        {/* Footer Fijo */}
         <div className="p-8 border-t border-white/40 flex gap-4 shrink-0 bg-white/10 backdrop-blur-sm">
           <button 
             type="button" 
