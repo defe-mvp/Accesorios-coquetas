@@ -34,7 +34,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
   };
 
   const handleClearClick = () => {
-    if (confirm('¿Estás seguro de que deseas vaciar toda tu bolsa de compras?')) {
+    if (window.confirm('¿Estás seguro de que deseas vaciar toda tu bolsa de compras?')) {
       onClearCart();
     }
   };
@@ -93,19 +93,21 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
 
         {/* Footer (Total y Botón) */}
         {items.length > 0 && (
-          <div className="p-8 border-t border-white/30 space-y-4 shrink-0">
-            <div className="flex justify-between items-end">
+          <div className="p-8 border-t border-white/30 space-y-4 shrink-0 bg-white/20">
+            <div className="flex justify-between items-center">
               <div>
                 <span className="uppercase text-[9px] font-black text-pink-400 tracking-widest">Total Estimado</span>
-                <p className="text-3xl font-serif text-pink-900 leading-none mt-2">{formatCurrency(total)}</p>
+                <p className="text-3xl font-serif text-pink-900 leading-none mt-1">{formatCurrency(total)}</p>
               </div>
+              
               <button 
                 onClick={handleClearClick}
-                className="text-[9px] font-black text-pink-300 hover:text-red-400 uppercase tracking-widest transition-colors mb-1"
+                className="px-4 py-2 rounded-xl bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500 text-[10px] font-black uppercase tracking-widest transition-all border border-red-100 shadow-sm active:scale-95"
               >
                 Limpiar Bolsa
               </button>
             </div>
+            
             <button 
               onClick={onComprarClick}
               className="w-full bg-pink-600/90 hover:bg-pink-700 text-white py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-pink-300/40 active:scale-95 backdrop-blur-sm"
@@ -115,7 +117,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, onUpdat
           </div>
         )}
 
-        {/* Panel Checkout (Ahora Overlay Independiente) */}
+        {/* Panel Checkout (Overlay) */}
         {showContactSelection && (
           <div className="absolute top-28 bottom-4 inset-x-4 z-50 glass-panel rounded-[2rem] flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-300 shadow-2xl backdrop-blur-xl border border-white/60">
             <h3 className="text-2xl font-serif text-pink-900 mb-2">Checkout</h3>
