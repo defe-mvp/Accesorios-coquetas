@@ -12,21 +12,39 @@ interface Props {
 const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) => {
   const [activeImage, setActiveImage] = useState(0);
 
-  // Bloquear el scroll del body al montar el componente
   useEffect(() => {
+    // Bloquear el scroll del body
     document.body.style.overflow = 'hidden';
+
+    // Agregar un estado al historial para habilitar el botón "Atrás" físico/gesto
+    window.history.pushState({ modalOpen: true }, '', window.location.href);
+
+    const handlePopState = () => {
+      // Si el usuario presiona "Atrás", ejecutamos onClose
+      onClose();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
     return () => {
       document.body.style.overflow = 'unset';
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [onClose]);
+
+  // Maneja el cierre manual (Botón X o al Agregar)
+  // Usamos history.back() para limpiar el historial y disparar el evento popstate que cierra el modal
+  const handleManualClose = () => {
+    window.history.back();
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-pink-900/30 backdrop-blur-xl md:p-4 animate-in fade-in duration-300">
       <div className="glass-panel w-full h-[95vh] md:h-auto md:max-h-[90vh] md:w-full md:max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row relative overflow-hidden bg-white/60">
         
-        {/* Botón Cerrar - Flotante para asegurar visibilidad */}
+        {/* Botón Cerrar - Usa handleManualClose para sincronizar */}
         <button 
-          onClick={onClose} 
+          onClick={handleManualClose} 
           className="absolute top-4 right-4 z-50 p-2 glass-button rounded-full text-pink-900 hover:text-pink-600 transition-transform active:scale-90 bg-white/50 backdrop-blur-md shadow-sm border border-white/40"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,10 +52,7 @@ const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) =
           </svg>
         </button>
 
-        {/* Contenedor principal con scroll: 
-            En móvil: overflow-y-auto permite scrollear toda la ficha (imagen + texto).
-            En desktop: overflow-hidden oculta el scroll global del modal, y usamos scroll interno en la columna derecha.
-        */}
+        {/* Contenedor principal con scroll */}
         <div className="flex flex-col md:flex-row w-full h-full overflow-y-auto md:overflow-hidden custom-scrollbar">
           
           {/* Columna Izquierda (Imágenes) */}
@@ -91,7 +106,7 @@ const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) =
             <div className="mt-auto pt-4 md:pt-8 border-t border-white/30 pb-safe md:pb-0">
               <button 
                 disabled={product.stock === 0}
-                onClick={() => { onAddToCart(product); onClose(); }}
+                onClick={() => { onAddToCart(product); handleManualClose(); }}
                 className="w-full bg-pink-600/90 text-white py-4 md:py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-pink-200 hover:bg-pink-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 backdrop-blur-sm"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
