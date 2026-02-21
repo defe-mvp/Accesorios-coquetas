@@ -28,6 +28,8 @@ const App: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 16;
   
   const [settings, setSettings] = useState<AdminSettings>({
     whatsappNumber: '595994318655',
@@ -80,22 +82,33 @@ const App: React.FC = () => {
   }, []);
 
   const fetchProducts = async () => {
-    const { data } = await supabase
-      .from('productos')
-      .select('*')
-      .order('order_index', { ascending: true });
-    
-    if (data) {
-      setProducts(data.map(p => ({
-        id: p.id,
-        name: p.nombre,
-        price: p.precio,
-        stock: p.stock,
-        description: p.descripcion,
-        images: p.imagenes || [],
-        category: p.categoria || 'Sin Categoría',
-        order_index: p.order_index
-      })));
+    try {
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*');
+      
+      if (error) {
+        console.error("Error fetching products:", error);
+        return;
+      }
+
+      if (data) {
+        // Ordenar manualmente por order_index si existe, si no, mantener el orden de la DB
+        const sortedData = [...data].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+        
+        setProducts(sortedData.map(p => ({
+          id: p.id,
+          name: p.nombre,
+          price: p.precio,
+          stock: p.stock,
+          description: p.descripcion,
+          images: p.imagenes || [],
+          category: p.categoria || 'Sin Categoría',
+          order_index: p.order_index || 0
+        })));
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
     }
   };
 
@@ -168,6 +181,10 @@ const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, sortBy]);
+
   const processedProducts = useMemo(() => {
     let p = [...products];
     if (selectedCategory !== 'Todos') {
@@ -178,6 +195,13 @@ const App: React.FC = () => {
     if (sortBy === 'name-az') return p.sort((a, b) => a.name.localeCompare(b.name));
     return p;
   }, [products, sortBy, selectedCategory]);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return processedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [processedProducts, currentPage]);
+
+  const totalPages = Math.ceil(processedProducts.length / ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen relative">
@@ -193,6 +217,8 @@ const App: React.FC = () => {
         isAdmin={isLoggedIn}
         onOpenSettings={() => setShowSettingsModal(true)}
         onLogout={async () => { await supabase.auth.signOut(); setIsLoggedIn(false); setMode(UserMode.CLIENT); }}
+        products={products}
+        onSelectProduct={setViewingProduct}
       />
 
       <Sidebar 
@@ -214,8 +240,6 @@ const App: React.FC = () => {
             </p>
           </div>
         </div>
-
-        <SocialSection settings={settings} />
 
         <div className="flex items-center justify-end mb-12 mt-8">
           <div className="flex items-center gap-4 glass-panel px-6 py-3 rounded-full">
@@ -244,7 +268,7 @@ const App: React.FC = () => {
         </div>
 
         <ProductGrid 
-          products={processedProducts}
+          products={paginatedProducts}
           mode={mode}
           onAddToCart={handleAddToCart}
           onEdit={setEditingProduct}
@@ -253,6 +277,49 @@ const App: React.FC = () => {
           onReorder={() => {}}
           isSortingByDefault={sortBy === 'default' && selectedCategory === 'Todos'}
         />
+
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-12 flex-wrap">
+            <button 
+              onClick={() => {
+                setCurrentPage(p => Math.max(1, p - 1));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={currentPage === 1}
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-pink-200 text-pink-600 hover:bg-pink-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+            >
+              &lt;
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => {
+                  setCurrentPage(page);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                  currentPage === page 
+                    ? 'bg-pink-500 text-white shadow-md' 
+                    : 'border border-pink-200 text-pink-600 hover:bg-pink-50'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button 
+              onClick={() => {
+                setCurrentPage(p => Math.min(totalPages, p + 1));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={currentPage === totalPages}
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-pink-200 text-pink-600 hover:bg-pink-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+            >
+              &gt;
+            </button>
+          </div>
+        )}
       </main>
 
       <button 
@@ -314,6 +381,9 @@ const App: React.FC = () => {
       />
 
       <footer className="relative z-10 py-12 text-center mt-20 border-t border-white/40 bg-white/20 backdrop-blur-lg">
+        <div className="mb-12">
+          <SocialSection settings={settings} />
+        </div>
         <h2 className="text-3xl font-serif text-pink-900 mb-2">{settings.companyName}</h2>
         <p className="text-pink-400 text-sm mb-8 font-medium">Hecho con amor.</p>
         <button onClick={() => isLoggedIn ? setMode(UserMode.ADMIN) : setShowLoginModal(true)} className="px-6 py-2 rounded-full border border-pink-200 text-[10px] text-pink-400 hover:text-pink-600 uppercase tracking-widest font-bold transition-all">Panel Administrativo</button>
