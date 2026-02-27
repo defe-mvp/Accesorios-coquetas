@@ -18,7 +18,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
     stock: 0,
     description: '',
     images: [],
-    category: ''
+    category: '',
+    isOffer: false,
+    originalPrice: 0
   });
   const [isUploading, setIsUploading] = useState(false);
 
@@ -32,7 +34,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
         stock: 0,
         description: '',
         images: [],
-        category: categories.length > 0 ? categories[0].nombre : ''
+        category: categories.length > 0 ? categories[0].nombre : '',
+        isOffer: false,
+        originalPrice: 0
       });
     }
   }, [product, categories]);
@@ -173,6 +177,42 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
                 className={inputClass} 
               />
             </div>
+          </div>
+
+          <div className="glass-panel p-4 rounded-xl border border-pink-200/50 bg-pink-50/30">
+            <div className="flex items-center justify-between mb-4">
+              <label className="text-sm font-bold text-pink-900 flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  checked={formData.isOffer || false} 
+                  onChange={e => setFormData({...formData, isOffer: e.target.checked})} 
+                  className="w-4 h-4 text-pink-600 rounded focus:ring-pink-500 border-gray-300"
+                />
+                Producto en Oferta
+              </label>
+              {formData.isOffer && <span className="text-[10px] font-black uppercase text-pink-500 tracking-widest bg-pink-100 px-2 py-1 rounded-full">Activo</span>}
+            </div>
+            
+            {formData.isOffer && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+                <div className="space-y-1">
+                  <label className={labelClass}>Precio Original (Antes)</label>
+                  <input 
+                    type="number" 
+                    placeholder="0" 
+                    value={formData.originalPrice || 0} 
+                    onChange={e => setFormData({...formData, originalPrice: parseInt(e.target.value) || 0})} 
+                    className={inputClass} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className={labelClass}>Precio Oferta (Actual)</label>
+                  <div className="text-xs text-pink-400 italic mt-2">
+                    El precio principal del producto será el precio de oferta.
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">

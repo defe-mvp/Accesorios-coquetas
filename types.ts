@@ -8,6 +8,8 @@ export interface Product {
   description: string;
   order_index: number;
   category: string;
+  isOffer?: boolean;
+  originalPrice?: number;
 }
 
 export interface Category {
@@ -17,6 +19,7 @@ export interface Category {
 }
 
 export interface WhatsAppContact {
+  id?: number;
   name: string;
   number: string;
 }
@@ -33,6 +36,12 @@ export enum UserMode {
   ADMIN = 'ADMIN'
 }
 
+export interface CarouselImage {
+  id: number;
+  imagen_url: string;
+  orden: number;
+}
+
 export interface AdminSettings {
   whatsappNumber: string;
   whatsappContacts: WhatsAppContact[];
@@ -40,4 +49,5 @@ export interface AdminSettings {
   instagramUrl?: string;
   facebookUrl?: string;
   tiktokUrl?: string;
+  carouselInterval?: number;
 }

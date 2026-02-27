@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { AdminSettings, Category, WhatsAppContact } from '../types';
+import React, { useState, useEffect } from 'react';
+import { AdminSettings, Category, WhatsAppContact, CarouselImage } from '../types';
 import { supabase } from '../supabaseClient';
 
 interface Props {
@@ -17,6 +17,18 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
   const [newCat, setNewCat] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [newContact, setNewContact] = useState<WhatsAppContact>({ name: '', number: '' });
+  const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCarouselImages();
+    }
+  }, [isOpen]);
+
+  const fetchCarouselImages = async () => {
+    const { data } = await supabase.from('carrusel').select('*').order('orden', { ascending: true });
+    if (data) setCarouselImages(data);
+  };
 
   if (!isOpen) return null;
 
@@ -56,20 +68,83 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
     setIsProcessing(false);
   };
 
-  const handleAddContact = () => {
+  const handleAddContact = async () => {
     if (!newContact.name || !newContact.number) return;
-    setData({
-      ...data,
-      whatsappContacts: [...data.whatsappContacts, newContact]
-    });
-    setNewContact({ name: '', number: '' });
+    
+    setIsProcessing(true);
+    const { error } = await supabase.from('vendedores').insert([{ nombre: newContact.name, numero: newContact.number }]);
+    
+    if (error) {
+      alert("Error al agregar vendedor: " + error.message);
+    } else {
+      setNewContact({ name: '', number: '' });
+      // Refresh contacts list - we need to fetch from DB or update local state
+      // For simplicity, we can just update local state assuming success, but better to refetch.
+      // Since we don't have a refetchContacts prop, we'll rely on parent refresh or just update local state optimistically
+      // However, to get the ID we should probably just re-fetch in parent.
+      // Let's update local state with a temp ID or just wait for parent refresh?
+      // The best way is to update the local state to show it immediately.
+      // But we need the ID for deletion.
+      // Let's just trigger a save/refresh cycle or add a specific refresh prop for contacts.
+      // Actually, let's just update the local state and let the parent handle the full refresh on save/close or add a refreshContacts callback.
+      // Given the current structure, we'll modify onSave to also refresh settings.
+      
+      // Better approach: Fetch the new list here
+      const { data } = await supabase.from('vendedores').select('*').order('nombre', { ascending: true });
+      if (data) {
+        setData({
+          ...data,
+          whatsappContacts: data.map(c => ({ id: c.id, name: c.nombre, number: c.numero }))
+        });
+      }
+    }
+    setIsProcessing(false);
   };
 
-  const handleRemoveContact = (index: number) => {
-    setData({
-      ...data,
-      whatsappContacts: data.whatsappContacts.filter((_, i) => i !== index)
-    });
+  const handleRemoveContact = async (id?: number) => {
+    if (!id) return;
+    if (confirm('¿Eliminar este vendedor?')) {
+      setIsProcessing(true);
+      await supabase.from('vendedores').delete().eq('id', id);
+      
+      // Refresh local list
+      const { data: contacts } = await supabase.from('vendedores').select('*').order('nombre', { ascending: true });
+      if (contacts) {
+        setData({
+          ...data,
+          whatsappContacts: contacts.map(c => ({ id: c.id, name: c.nombre, number: c.numero }))
+        });
+      }
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCarouselUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (carouselImages.length >= 10) {
+      alert("Máximo 10 imágenes permitidas en el carrusel.");
+      return;
+    }
+
+    setIsProcessing(true);
+    const fileName = `carousel_${Date.now()}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage.from('catalogo').upload(fileName, file);
+
+    if (uploadData) {
+      const { data: { publicUrl } } = supabase.storage.from('catalogo').getPublicUrl(uploadData.path);
+      await supabase.from('carrusel').insert([{ imagen_url: publicUrl, orden: carouselImages.length }]);
+      fetchCarouselImages();
+    }
+    setIsProcessing(false);
+  };
+
+  const handleDeleteCarouselImage = async (id: number) => {
+    if (confirm('¿Eliminar esta imagen del carrusel?')) {
+      await supabase.from('carrusel').delete().eq('id', id);
+      fetchCarouselImages();
+    }
   };
 
   const inputClass = "w-full glass-input p-3 rounded-xl text-pink-900 placeholder:text-pink-300 outline-none focus:bg-white/60 transition-all text-sm";
@@ -166,12 +241,12 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
               
               <div className="space-y-2">
                 {data.whatsappContacts.map((contact, idx) => (
-                  <div key={idx} className="flex items-center justify-between glass-card p-3 rounded-xl">
+                  <div key={contact.id || idx} className="flex items-center justify-between glass-card p-3 rounded-xl">
                     <div>
                       <p className="text-xs font-bold text-pink-900">{contact.name}</p>
                       <p className="text-[10px] text-pink-400">{contact.number}</p>
                     </div>
-                    <button onClick={() => handleRemoveContact(idx)} className="text-red-300 hover:text-red-500 p-1">
+                    <button onClick={() => handleRemoveContact(contact.id)} className="text-red-300 hover:text-red-500 p-1">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -179,6 +254,65 @@ const AdminSettingsModal: React.FC<Props> = ({ isOpen, settings, categories, onC
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <h3 className="text-xs font-black uppercase text-pink-400 tracking-widest border-b border-white/30 pb-3">Carrusel Principal</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black uppercase text-pink-300 block mb-2 ml-1">Intervalo (segundos)</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min="3"
+                    placeholder="0 para desactivar auto-play"
+                    value={data.carouselInterval || 0}
+                    onChange={e => setData({...data, carouselInterval: parseInt(e.target.value) || 0})}
+                    className={inputClass}
+                  />
+                  <span className="text-xs text-pink-400 italic whitespace-nowrap">Min: 3s (0 = estático)</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {carouselImages.map((img, idx) => (
+                  <div key={img.id} className="relative aspect-video rounded-xl overflow-hidden group shadow-md border border-pink-100">
+                    <img src={img.imagen_url} className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => handleDeleteCarouselImage(img.id)}
+                      className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <div className="absolute bottom-1 left-1 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                      #{idx + 1}
+                    </div>
+                  </div>
+                ))}
+                
+                {carouselImages.length < 10 && (
+                  <label className="aspect-video rounded-xl border-2 border-dashed border-pink-200 flex flex-col items-center justify-center cursor-pointer hover:bg-pink-50/50 transition-colors group">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-pink-300 group-hover:text-pink-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="text-[10px] font-bold text-pink-300 mt-1 uppercase tracking-wider group-hover:text-pink-500">Subir 16:9</span>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleCarouselUpload}
+                      disabled={isProcessing}
+                    />
+                  </label>
+                )}
+              </div>
+              <p className="text-[10px] text-pink-400 italic text-center">
+                * Las imágenes deben tener relación de aspecto 16:9 para mejor visualización.
+              </p>
             </div>
           </div>
 

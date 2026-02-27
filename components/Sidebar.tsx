@@ -8,9 +8,10 @@ interface SidebarProps {
   categories: Category[];
   selectedCategory: string;
   onSelectCategory: (name: string) => void;
+  hasOffers: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories, selectedCategory, onSelectCategory }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories, selectedCategory, onSelectCategory, hasOffers }) => {
   return (
     <>
       <div 
@@ -42,6 +43,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories, selected
               <div className="h-0.5 w-8 bg-pink-300 mt-2 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
             </div>
           </button>
+
+          {hasOffers && (
+            <button
+              onClick={() => { onSelectCategory('Ofertas'); onClose(); }}
+              className={`w-full group relative h-24 rounded-[2rem] overflow-hidden transition-all duration-500 ${selectedCategory === 'Ofertas' ? 'ring-2 ring-yellow-400 shadow-lg scale-[1.02]' : 'hover:scale-[1.02]'}`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-100 to-white opacity-80" />
+              <div className="relative z-20 h-full flex flex-col items-center justify-center">
+                <span className="text-yellow-800 font-black uppercase tracking-[0.3em] text-xs flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 5a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0v-1H3a1 1 0 010-2h1V8a1 1 0 011-1zm5-5a1 1 0 011 1v1h1a1 1 0 010 2h-1v1a1 1 0 01-2 0v-1h-1a1 1 0 010-2h1V3a1 1 0 011-1zm0 5a1 1 0 011 1v1h1a1 1 0 010 2h-1v1a1 1 0 01-2 0v-1h-1a1 1 0 010-2h1V8a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  Ofertas
+                </span>
+                <div className="h-0.5 w-8 bg-yellow-400 mt-2 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              </div>
+            </button>
+          )}
 
           {categories.map((cat) => (
             <button

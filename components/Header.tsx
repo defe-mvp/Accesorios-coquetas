@@ -59,8 +59,7 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
           </button>
           
           <div className="flex flex-col hidden md:flex">
-            <span className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-pink-900 leading-none">Coquetas</span>
-            <span className="text-[9px] tracking-[0.3em] uppercase text-pink-400 font-bold mt-1">Fine Jewelry</span>
+            <span className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-pink-900 leading-none">Coquet@s</span>
           </div>
         </div>
 

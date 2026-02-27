@@ -11,6 +11,9 @@ import AdminLogin from './components/AdminLogin';
 import AdminSettingsModal from './components/AdminSettingsModal';
 import SocialSection from './components/SocialSection';
 import ProductDetailView from './components/ProductDetailView';
+import Carousel from './components/Carousel';
+import ProductCard from './components/ProductCard';
+import { CarouselImage } from './types';
 
 const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -29,6 +32,7 @@ const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
   const ITEMS_PER_PAGE = 16;
   
   const [settings, setSettings] = useState<AdminSettings>({
@@ -67,6 +71,7 @@ const App: React.FC = () => {
     fetchProducts();
     fetchSettings();
     fetchCategories();
+    fetchCarouselImages();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
@@ -80,6 +85,11 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchCarouselImages = async () => {
+    const { data } = await supabase.from('carrusel').select('*').order('orden', { ascending: true });
+    if (data) setCarouselImages(data);
+  };
 
   const fetchProducts = async () => {
     try {
@@ -104,7 +114,9 @@ const App: React.FC = () => {
           description: p.descripcion,
           images: p.imagenes || [],
           category: p.categoria || 'Sin Categoría',
-          order_index: p.order_index || 0
+          order_index: p.order_index || 0,
+          isOffer: p.es_oferta || false,
+          originalPrice: p.precio_original || 0
         })));
       }
     } catch (err) {
@@ -120,14 +132,17 @@ const App: React.FC = () => {
   const fetchSettings = async () => {
     try {
       const { data } = await supabase.from('configuracion').select('*').eq('id', 1).single();
+      const { data: contactsData } = await supabase.from('vendedores').select('*').order('nombre', { ascending: true });
+      
       if (data) {
         setSettings({
           whatsappNumber: data.whatsapp_number || '595994318655',
-          whatsappContacts: data.whatsapp_contacts || [],
+          whatsappContacts: contactsData?.map(c => ({ id: c.id, name: c.nombre, number: c.numero })) || [],
           companyName: data.nombre_empresa || 'Accesorios Coquetas',
           instagramUrl: data.instagram_url || '',
           facebookUrl: data.facebook_url || '',
-          tiktokUrl: data.tiktok_url || ''
+          tiktokUrl: data.tiktok_url || '',
+          carouselInterval: data.carrusel_intervalo || 5
         });
       }
     } catch (e) {}
@@ -163,7 +178,9 @@ const App: React.FC = () => {
       stock: productData.stock,
       descripcion: productData.description,
       imagenes: productData.images || [],
-      categoria: productData.category
+      categoria: productData.category,
+      es_oferta: productData.isOffer,
+      precio_original: productData.originalPrice
     };
 
     try {
@@ -187,7 +204,9 @@ const App: React.FC = () => {
 
   const processedProducts = useMemo(() => {
     let p = [...products];
-    if (selectedCategory !== 'Todos') {
+    if (selectedCategory === 'Ofertas') {
+      p = p.filter(prod => prod.isOffer);
+    } else if (selectedCategory !== 'Todos') {
       p = p.filter(prod => prod.category === selectedCategory);
     }
     if (sortBy === 'price-asc') return p.sort((a, b) => a.price - b.price);
@@ -202,6 +221,8 @@ const App: React.FC = () => {
   }, [processedProducts, currentPage]);
 
   const totalPages = Math.ceil(processedProducts.length / ITEMS_PER_PAGE);
+
+  const offerProducts = useMemo(() => products.filter(p => p.isOffer), [products]);
 
   return (
     <div className="min-h-screen relative">
@@ -227,16 +248,48 @@ const App: React.FC = () => {
         categories={categories} 
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
+        hasOffers={offerProducts.length > 0}
       />
       
       <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
+        
+        <Carousel images={carouselImages} interval={settings.carouselInterval || 5} />
+
+        {offerProducts.length > 0 && (
+          <section className="mb-16 animate-fadeIn">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-300 to-transparent"></div>
+              <h2 className="text-2xl md:text-3xl font-serif text-pink-900 font-bold flex items-center gap-2">
+                <span className="text-3xl">✨</span> Ofertas Especiales
+              </h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-300 to-transparent"></div>
+            </div>
+            
+            <div className="overflow-x-auto pb-8 -mx-6 px-6 custom-scrollbar flex gap-6 snap-x snap-mandatory">
+              {offerProducts.map(product => (
+                <div key={product.id} className="min-w-[200px] w-[200px] snap-center">
+                  <ProductCard 
+                    product={product}
+                    mode={mode}
+                    onAddToCart={handleAddToCart}
+                    onEdit={setEditingProduct}
+                    onView={setViewingProduct}
+                    onDelete={async (id) => { if(confirm('¿Eliminar producto?')) { await supabase.from('productos').delete().eq('id', id); fetchProducts(); } }}
+                    compact={true}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-8">
           <div className="space-y-4">
             <h1 className="text-5xl md:text-7xl font-serif text-pink-900 leading-tight drop-shadow-sm tracking-tight">
-              {selectedCategory === 'Todos' ? 'Colección Exclusiva' : selectedCategory}
+              {selectedCategory === 'Todos' ? 'Productos Disponibles' : selectedCategory}
             </h1>
             <p className="text-pink-400 text-lg font-medium max-w-lg leading-relaxed">
-              Accesorios diseñados para resaltar tu belleza natural.
+              La vida es una sola; Ponte coQuet@
             </p>
           </div>
         </div>
@@ -341,15 +394,24 @@ const App: React.FC = () => {
         onClose={() => setShowSettingsModal(false)}
         onRefreshCategories={fetchCategories}
         onSave={async (s) => {
+          // Update config
           const { error } = await supabase.from('configuracion').update({ 
             whatsapp_number: s.whatsappNumber,
-            whatsapp_contacts: s.whatsappContacts,
+            // whatsapp_contacts is no longer used in configuracion table for active contacts, but we keep the field for legacy if needed or remove it. 
+            // We are now using 'vendedores' table for contacts.
             instagram_url: s.instagramUrl,
             facebook_url: s.facebookUrl,
             tiktok_url: s.tiktokUrl,
-            nombre_empresa: s.companyName
+            nombre_empresa: s.companyName,
+            carrusel_intervalo: (s.carouselInterval > 0 && s.carouselInterval < 3) ? 3 : s.carouselInterval
           }).eq('id', 1);
-          if (!error) { setSettings(s); setShowSettingsModal(false); }
+          
+          if (!error) { 
+            setSettings(s); 
+            setShowSettingsModal(false); 
+            fetchSettings(); // Refresh to get latest data including contacts
+            fetchCarouselImages(); // Refresh carousel too
+          }
         }}
       />
 
