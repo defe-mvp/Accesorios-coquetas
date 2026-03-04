@@ -33,6 +33,7 @@ const App: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const ITEMS_PER_PAGE = 16;
   
   const [settings, setSettings] = useState<AdminSettings>({
@@ -204,16 +205,22 @@ const App: React.FC = () => {
 
   const processedProducts = useMemo(() => {
     let p = [...products];
-    if (selectedCategory === 'Ofertas') {
-      p = p.filter(prod => prod.isOffer);
-    } else if (selectedCategory !== 'Todos') {
-      p = p.filter(prod => prod.category === selectedCategory);
+    
+    if (searchQuery) {
+      p = p.filter(prod => prod.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    } else {
+      if (selectedCategory === 'Ofertas') {
+        p = p.filter(prod => prod.isOffer);
+      } else if (selectedCategory !== 'Todos') {
+        p = p.filter(prod => prod.category === selectedCategory);
+      }
     }
+
     if (sortBy === 'price-asc') return p.sort((a, b) => a.price - b.price);
     if (sortBy === 'price-desc') return p.sort((a, b) => b.price - a.price);
     if (sortBy === 'name-az') return p.sort((a, b) => a.name.localeCompare(b.name));
     return p;
-  }, [products, sortBy, selectedCategory]);
+  }, [products, sortBy, selectedCategory, searchQuery]);
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -240,6 +247,17 @@ const App: React.FC = () => {
         onLogout={async () => { await supabase.auth.signOut(); setIsLoggedIn(false); setMode(UserMode.CLIENT); }}
         products={products}
         onSelectProduct={setViewingProduct}
+        onShowAllResults={(query) => {
+          setSearchQuery(query);
+          setCurrentPage(1);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onGoHome={() => {
+          setSearchQuery('');
+          setSelectedCategory('Todos');
+          setCurrentPage(1);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
       <Sidebar 
@@ -247,15 +265,19 @@ const App: React.FC = () => {
         onClose={() => setIsSidebarOpen(false)} 
         categories={categories} 
         selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          setSearchQuery('');
+          setCurrentPage(1);
+        }}
         hasOffers={offerProducts.length > 0}
       />
       
       <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         
-        <Carousel images={carouselImages} interval={settings.carouselInterval || 5} />
+        {!searchQuery && <Carousel images={carouselImages} interval={settings.carouselInterval || 5} />}
 
-        {offerProducts.length > 0 && (
+        {!searchQuery && offerProducts.length > 0 && (
           <section className="mb-16 animate-fadeIn">
             <div className="flex items-center gap-4 mb-6">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-300 to-transparent"></div>
@@ -285,8 +307,19 @@ const App: React.FC = () => {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-8">
           <div className="space-y-4">
+            {searchQuery && (
+              <button 
+                onClick={() => { setSearchQuery(''); setSelectedCategory('Todos'); }}
+                className="text-pink-500 hover:text-pink-700 text-sm font-bold flex items-center gap-2 mb-2 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Volver al inicio
+              </button>
+            )}
             <h1 className="text-5xl md:text-7xl font-serif text-pink-900 leading-tight drop-shadow-sm tracking-tight">
-              {selectedCategory === 'Todos' ? 'Productos Disponibles' : selectedCategory}
+              {searchQuery ? `Resultados para: "${searchQuery}"` : (selectedCategory === 'Todos' ? 'Productos Disponibles' : selectedCategory)}
             </h1>
             <p className="text-pink-400 text-lg font-medium max-w-lg leading-relaxed">
               La vida es una sola; Ponte coQuet@

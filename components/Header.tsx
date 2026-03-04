@@ -12,9 +12,11 @@ interface HeaderProps {
   onLogout: () => void;
   products: Product[];
   onSelectProduct: (product: Product) => void;
+  onShowAllResults: (query: string) => void;
+  onGoHome: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu, isAdmin, onOpenSettings, onLogout, products, onSelectProduct }) => {
+const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu, isAdmin, onOpenSettings, onLogout, products, onSelectProduct, onShowAllResults, onGoHome }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -29,12 +31,20 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredProducts = products.filter(p => 
+  const allMatches = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5);
+  );
+  
+  const filteredProducts = allMatches.slice(0, 4);
 
   const handleSelectProduct = (product: Product) => {
     onSelectProduct(product);
+    setSearchQuery('');
+    setShowSuggestions(false);
+  };
+
+  const handleShowAll = () => {
+    onShowAllResults(searchQuery);
     setSearchQuery('');
     setShowSuggestions(false);
   };
@@ -58,7 +68,7 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
             </svg>
           </button>
           
-          <div className="flex flex-col hidden md:flex">
+          <div className="flex flex-col hidden md:flex cursor-pointer" onClick={onGoHome}>
             <span className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-pink-900 leading-none">Coquet@s</span>
           </div>
         </div>
@@ -74,6 +84,11 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
                 setShowSuggestions(true);
               }}
               onFocus={() => setShowSuggestions(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery) {
+                  handleShowAll();
+                }
+              }}
               className="w-full bg-white/50 border border-pink-200 rounded-full py-2 pl-4 pr-10 text-sm text-pink-900 placeholder-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all"
             />
             {searchQuery ? (
@@ -95,28 +110,40 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
           {showSuggestions && searchQuery && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-md border border-pink-100 rounded-2xl shadow-xl overflow-hidden z-50">
               {filteredProducts.length > 0 ? (
-                <ul className="max-h-60 overflow-y-auto py-2">
-                  {filteredProducts.map(product => (
-                    <li key={product.id}>
-                      <button
-                        onClick={() => handleSelectProduct(product)}
-                        className="w-full text-left px-4 py-2 hover:bg-pink-50 flex items-center gap-3 transition-colors"
-                      >
-                        {product.images?.[0] ? (
-                          <img src={product.images[0]} alt={product.name} className="w-8 h-8 rounded-md object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-md bg-pink-100 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-pink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <>
+                  <ul className="max-h-60 overflow-y-auto py-2">
+                    {filteredProducts.map(product => (
+                      <li key={product.id}>
+                        <button
+                          onClick={() => handleSelectProduct(product)}
+                          className="w-full text-left px-4 py-2 hover:bg-pink-50 flex items-center gap-3 transition-colors"
+                        >
+                          {product.images?.[0] ? (
+                            <img src={product.images[0]} alt={product.name} className="w-8 h-8 rounded-md object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-md bg-pink-100 flex items-center justify-center">
+                              <svg className="w-4 h-4 text-pink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-pink-900 truncate">{product.name}</p>
+                            <p className="text-xs text-pink-500 font-bold">Gs. {product.price.toLocaleString('es-PY')}</p>
                           </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-pink-900 truncate">{product.name}</p>
-                          <p className="text-xs text-pink-500 font-bold">Gs. {product.price.toLocaleString('es-PY')}</p>
-                        </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  {allMatches.length > 4 && (
+                    <div className="border-t border-pink-100 p-2 bg-pink-50/50">
+                      <button 
+                        onClick={handleShowAll}
+                        className="w-full text-center text-xs font-bold text-pink-600 hover:text-pink-800 py-2 uppercase tracking-wide"
+                      >
+                        Ver todos los resultados ({allMatches.length})
                       </button>
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="p-4 text-center text-sm text-pink-500">
                   No se encontraron productos.
