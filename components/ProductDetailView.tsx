@@ -1,15 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { Product } from '../types';
+import { Product, UserMode } from '../types';
 import { formatCurrency } from '../constants';
 
 interface Props {
   product: Product;
   onClose: () => void;
   onAddToCart: (p: Product) => void;
+  mode?: UserMode;
+  onEdit?: (p: Product) => void;
 }
 
-const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) => {
+const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart, mode, onEdit }) => {
   const [activeImage, setActiveImage] = useState(0);
 
   // Scroll to top when component mounts
@@ -18,7 +20,15 @@ const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) =
   }, []);
 
   return (
-    <div className="w-full bg-white rounded-sm border border-gray-200 p-6 md:p-8 animate-in fade-in duration-300">
+    <div className="w-full bg-white rounded-sm border border-gray-200 p-6 md:p-8 animate-in fade-in duration-300 relative">
+      {mode === UserMode.ADMIN && onEdit && (
+        <button
+          onClick={() => onEdit(product)}
+          className="absolute top-6 right-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-sm text-sm font-bold uppercase tracking-wider transition-colors z-10 flex items-center gap-2"
+        >
+          <span>✏️</span> Editar Producto
+        </button>
+      )}
       <div className="flex flex-col md:flex-row gap-8">
         
         {/* Left Column: Thumbnails (Desktop) */}
@@ -28,9 +38,9 @@ const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) =
               <button 
                 key={idx}
                 onClick={() => setActiveImage(idx)}
-                className={`w-full aspect-square border-2 transition-all ${activeImage === idx ? 'border-pink-500' : 'border-gray-200 hover:border-pink-300'}`}
+                className={`w-full aspect-square border-2 transition-all overflow-hidden ${activeImage === idx ? 'border-pink-500' : 'border-gray-200 hover:border-pink-300'}`}
               >
-                <img src={img} className="w-full h-full object-contain" alt={`${product.name} thumbnail ${idx + 1}`} />
+                <img src={img} className="w-full h-full object-cover" alt={`${product.name} thumbnail ${idx + 1}`} />
               </button>
             ))}
           </div>
@@ -38,24 +48,24 @@ const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) =
 
         {/* Center Column: Main Image */}
         <div className="flex-1 relative bg-white flex flex-col items-center justify-start">
-          <div className="w-full aspect-square border border-gray-200 flex items-center justify-center p-4">
+          <div className="w-full max-w-[500px] aspect-square border border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50">
             <img 
               src={product.images[activeImage]} 
-              className="w-full h-full object-contain" 
+              className="w-full h-full object-cover" 
               alt={product.name}
             />
           </div>
 
           {/* Mobile Thumbnails */}
           {product.images.length > 1 && (
-            <div className="flex md:hidden gap-3 overflow-x-auto mt-4 w-full custom-scrollbar pb-2">
+            <div className="flex md:hidden gap-3 overflow-x-auto mt-4 w-full max-w-[500px] custom-scrollbar pb-2">
               {product.images.map((img, idx) => (
                 <button 
                   key={idx}
                   onClick={() => setActiveImage(idx)}
-                  className={`w-20 aspect-square shrink-0 border-2 transition-all ${activeImage === idx ? 'border-pink-500' : 'border-gray-200'}`}
+                  className={`w-20 aspect-square shrink-0 border-2 transition-all overflow-hidden ${activeImage === idx ? 'border-pink-500' : 'border-gray-200'}`}
                 >
-                  <img src={img} className="w-full h-full object-contain" alt={`${product.name} thumbnail ${idx + 1}`} />
+                  <img src={img} className="w-full h-full object-cover" alt={`${product.name} thumbnail ${idx + 1}`} />
                 </button>
               ))}
             </div>

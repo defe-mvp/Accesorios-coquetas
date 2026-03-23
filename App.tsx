@@ -360,6 +360,11 @@ const App: React.FC = () => {
               product={viewingProduct} 
               onClose={() => setViewingProduct(null)} 
               onAddToCart={handleAddToCart}
+              mode={mode}
+              onEdit={(p) => {
+                setEditingProduct(p);
+                setIsProductModalOpen(true);
+              }}
             />
           ) : (
             <>

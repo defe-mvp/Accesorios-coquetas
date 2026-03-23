@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Product, Category } from '../types';
 import { supabase } from '../supabaseClient';
+import Cropper from 'react-easy-crop';
 
 interface ProductModalProps {
   product?: Product;
@@ -9,6 +10,88 @@ interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (p: any) => void;
+}
+
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.setAttribute('crossOrigin', 'anonymous'); // needed to avoid cross-origin issues on CodeSandbox
+    image.src = url;
+  });
+
+function getRadianAngle(degreeValue: number) {
+  return (degreeValue * Math.PI) / 180;
+}
+
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: any,
+  rotation = 0,
+  flip = { horizontal: false, vertical: false }
+): Promise<Blob | null> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    return null;
+  }
+
+  const rotRad = getRadianAngle(rotation);
+
+  // calculate bounding box of the rotated image
+  const { width: bBoxWidth, height: bBoxHeight } = {
+    width:
+      Math.abs(Math.cos(rotRad) * image.width) + Math.abs(Math.sin(rotRad) * image.height),
+    height:
+      Math.abs(Math.sin(rotRad) * image.width) + Math.abs(Math.cos(rotRad) * image.height),
+  };
+
+  // set canvas size to match the bounding box
+  canvas.width = bBoxWidth;
+  canvas.height = bBoxHeight;
+
+  // translate canvas context to a central location to allow rotating and flipping around the center
+  ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
+  ctx.rotate(rotRad);
+  ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
+  ctx.translate(-image.width / 2, -image.height / 2);
+
+  // draw rotated image
+  ctx.drawImage(image, 0, 0);
+
+  const croppedCanvas = document.createElement('canvas');
+  const croppedCtx = croppedCanvas.getContext('2d');
+
+  if (!croppedCtx) {
+    return null;
+  }
+
+  // Set the size of the cropped canvas
+  croppedCanvas.width = pixelCrop.width;
+  croppedCanvas.height = pixelCrop.height;
+
+  // Draw the cropped image onto the new canvas
+  croppedCtx.drawImage(
+    canvas,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  // As a blob
+  return new Promise((resolve, reject) => {
+    croppedCanvas.toBlob((file) => {
+      resolve(file);
+    }, 'image/webp', 0.9);
+  });
 }
 
 const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen, onClose, onSave }) => {
@@ -23,6 +106,13 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
     originalPrice: 0
   });
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Cropper state
+  const [croppingImage, setCroppingImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (product) {
@@ -41,63 +131,72 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
     }
   }, [product, categories]);
 
-  // FIX: Función para convertir imagen a WebP
-  const convertToWebP = (file: File): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200;
-          let width = img.width;
-          let height = img.height;
+  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error('Conversion error'));
-          }, 'image/webp', 0.8);
-        };
-      };
-    });
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setCroppingImage(reader.result as string);
+      setEditingImageIndex(null);
+    };
+    
+    // Reset input so the same file can be selected again if needed
+    e.target.value = '';
+  };
+
+  const handleEditImage = (url: string, index: number) => {
+    setCroppingImage(url);
+    setEditingImageIndex(index);
+  };
+
+  const handleSaveCrop = async () => {
+    if (!croppingImage || !croppedAreaPixels) return;
+
     setIsUploading(true);
     try {
-      const webpBlob = await convertToWebP(file);
-      const fileName = `${Date.now()}_${file.name.split('.')[0]}.webp`;
+      const croppedBlob = await getCroppedImg(croppingImage, croppedAreaPixels);
+      if (!croppedBlob) throw new Error('Failed to crop image');
+
+      const fileName = `${Date.now()}_cropped.webp`;
       
-      const { data, error } = await supabase.storage.from('catalogo').upload(fileName, webpBlob, {
+      const { data, error } = await supabase.storage.from('catalogo').upload(fileName, croppedBlob, {
         contentType: 'image/webp'
       });
 
       if (!error && data) {
         const { data: { publicUrl } } = supabase.storage.from('catalogo').getPublicUrl(data.path);
-        setFormData(prev => ({
-          ...prev,
-          images: [...(prev.images || []), publicUrl]
-        }));
+        
+        if (editingImageIndex !== null) {
+          setFormData(prev => {
+            const newImages = [...(prev.images || [])];
+            newImages[editingImageIndex] = publicUrl;
+            return { ...prev, images: newImages };
+          });
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            images: [...(prev.images || []), publicUrl]
+          }));
+        }
       }
     } catch (err) {
       console.error("Upload error", err);
     } finally {
       setIsUploading(false);
+      setCroppingImage(null);
+      setEditingImageIndex(null);
     }
+  };
+
+  const handleCancelCrop = () => {
+    setCroppingImage(null);
+    setEditingImageIndex(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -109,6 +208,51 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
 
   const inputClass = "w-full glass-input p-4 rounded-xl text-pink-900 placeholder:text-pink-300 outline-none focus:bg-white/60 transition-all text-sm font-medium";
   const labelClass = "block text-[10px] font-black uppercase text-pink-400 mb-2 ml-1 tracking-widest";
+
+  if (croppingImage) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl flex flex-col h-[80vh] overflow-hidden">
+          <div className="p-6 border-b border-gray-200 flex justify-between items-center shrink-0">
+            <h2 className="text-xl font-bold text-gray-900">Recortar Imagen (1:1)</h2>
+            <button type="button" onClick={handleCancelCrop} className="text-gray-400 hover:text-gray-600">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-grow relative bg-gray-900">
+            <Cropper
+              image={croppingImage}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+          <div className="p-6 border-t border-gray-200 flex gap-4 shrink-0 bg-gray-50">
+            <button 
+              type="button" 
+              onClick={handleCancelCrop} 
+              className="flex-1 py-3 text-gray-600 font-bold hover:text-gray-900 transition-colors text-sm uppercase tracking-widest"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="button"
+              onClick={handleSaveCrop}
+              disabled={isUploading} 
+              className="flex-[2] bg-pink-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-pink-700 active:scale-[0.98] transition-all disabled:opacity-50 text-sm uppercase tracking-widest"
+            >
+              {isUploading ? 'Guardando...' : 'Recortar y Guardar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-pink-900/10 backdrop-blur-md p-4 overflow-y-auto">
@@ -232,13 +376,28 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, categories, isOpen
               {formData.images?.map((url, i) => (
                 <div key={i} className="relative w-24 h-24 group">
                   <img src={url} className="w-full h-full object-cover rounded-2xl border border-white/50 shadow-sm" />
-                  <button 
-                    type="button" 
-                    onClick={() => setFormData({...formData, images: formData.images?.filter((_, idx) => idx !== i)})} 
-                    className="absolute -top-2 -right-2 bg-red-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md hover:bg-red-500 transition-colors"
-                  >
-                    ×
-                  </button>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-2">
+                    <button 
+                      type="button" 
+                      onClick={() => handleEditImage(url, i)} 
+                      className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md hover:bg-blue-600 transition-colors"
+                      title="Recortar imagen"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData({...formData, images: formData.images?.filter((_, idx) => idx !== i)})} 
+                      className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+                      title="Eliminar imagen"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
               <label className="w-24 h-24 border-2 border-dashed border-pink-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-pink-50 transition-all text-pink-300 hover:text-pink-500">
