@@ -12,114 +12,106 @@ interface Props {
 const ProductDetailView: React.FC<Props> = ({ product, onClose, onAddToCart }) => {
   const [activeImage, setActiveImage] = useState(0);
 
+  // Scroll to top when component mounts
   useEffect(() => {
-    // Bloquear el scroll del body
-    document.body.style.overflow = 'hidden';
-
-    // Agregar un estado al historial para habilitar el botón "Atrás" físico/gesto
-    window.history.pushState({ modalOpen: true }, '', window.location.href);
-
-    const handlePopState = () => {
-      // Si el usuario presiona "Atrás", ejecutamos onClose
-      onClose();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [onClose]);
-
-  // Maneja el cierre manual (Botón X o al Agregar)
-  // Usamos history.back() para limpiar el historial y disparar el evento popstate que cierra el modal
-  const handleManualClose = () => {
-    window.history.back();
-  };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-pink-900/30 backdrop-blur-xl md:p-4 animate-in fade-in duration-300">
-      <div className="glass-panel w-full h-[95vh] md:h-auto md:max-h-[90vh] md:w-full md:max-w-5xl rounded-t-[2.5rem] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row relative overflow-hidden bg-white/60">
+    <div className="w-full bg-white rounded-sm border border-gray-200 p-6 md:p-8 animate-in fade-in duration-300">
+      <div className="flex flex-col md:flex-row gap-8">
         
-        {/* Botón Cerrar - Usa handleManualClose para sincronizar */}
-        <button 
-          onClick={handleManualClose} 
-          className="absolute top-4 right-4 z-50 p-2 glass-button rounded-full text-pink-900 hover:text-pink-600 transition-transform active:scale-90 bg-white/50 backdrop-blur-md shadow-sm border border-white/40"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        {/* Contenedor principal con scroll */}
-        <div className="flex flex-col md:flex-row w-full h-full overflow-y-auto md:overflow-hidden custom-scrollbar">
-          
-          {/* Columna Izquierda (Imágenes) */}
-          <div className="w-full md:w-1/2 relative bg-white/30 p-4 pt-16 md:pt-4 flex flex-col items-center justify-center shrink-0">
-            <div className="w-full max-w-sm aspect-[4/5] rounded-[2rem] overflow-hidden mb-6 border border-white/50 shadow-sm mx-auto">
-              <img 
-                src={product.images[activeImage]} 
-                className="w-full h-full object-cover transition-transform duration-700" 
-                alt={product.name}
-              />
-            </div>
-
-            {product.images.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2 w-full justify-center custom-scrollbar px-4">
-                {product.images.map((img, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setActiveImage(idx)}
-                    className={`w-16 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${activeImage === idx ? 'border-pink-500 scale-105' : 'border-white/50 opacity-60'}`}
-                  >
-                    <img src={img} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Columna Derecha (Info) */}
-          <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col bg-white/40 md:overflow-y-auto custom-scrollbar">
-            <div className="mb-6 md:mb-8">
-              <span className="text-[10px] font-black text-pink-400 uppercase tracking-[0.3em] mb-4 block">{product.category}</span>
-              <h2 className="text-3xl md:text-5xl font-serif text-pink-900 leading-tight mb-4">{product.name}</h2>
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-2xl md:text-3xl font-bold text-pink-900">{formatCurrency(product.price)}</span>
-                {product.stock > 0 ? (
-                  <span className="text-[10px] font-black uppercase tracking-widest text-green-500 bg-green-50 px-3 py-1 rounded-full border border-green-100">En Stock</span>
-                ) : (
-                  <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-100">Agotado</span>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-6 mb-8">
-              <div>
-                <h4 className="text-[10px] font-black text-pink-300 uppercase tracking-widest mb-3">Descripción</h4>
-                <p className="text-pink-900/70 leading-relaxed text-sm whitespace-pre-wrap">{product.description}</p>
-              </div>
-            </div>
-
-            {/* Espaciador y Botón sticky en desktop o normal en móvil */}
-            <div className="mt-auto pt-4 md:pt-8 border-t border-white/30 pb-safe md:pb-0">
+        {/* Left Column: Thumbnails (Desktop) */}
+        {product.images.length > 1 && (
+          <div className="hidden md:flex flex-col gap-4 w-24 shrink-0">
+            {product.images.map((img, idx) => (
               <button 
-                disabled={product.stock === 0}
-                onClick={() => { onAddToCart(product); handleManualClose(); }}
-                className="w-full bg-pink-600/90 text-white py-4 md:py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-pink-200 hover:bg-pink-700 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 backdrop-blur-sm"
+                key={idx}
+                onClick={() => setActiveImage(idx)}
+                className={`w-full aspect-square border-2 transition-all ${activeImage === idx ? 'border-pink-500' : 'border-gray-200 hover:border-pink-300'}`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                Agregar a la Bolsa
+                <img src={img} className="w-full h-full object-contain" alt={`${product.name} thumbnail ${idx + 1}`} />
               </button>
-            </div>
-            
-            {/* Espacio extra al final para asegurar que el contenido no quede pegado al borde en móviles */}
-            <div className="h-8 md:hidden"></div>
+            ))}
+          </div>
+        )}
+
+        {/* Center Column: Main Image */}
+        <div className="flex-1 relative bg-white flex flex-col items-center justify-start">
+          <div className="w-full aspect-square border border-gray-200 flex items-center justify-center p-4">
+            <img 
+              src={product.images[activeImage]} 
+              className="w-full h-full object-contain" 
+              alt={product.name}
+            />
           </div>
 
+          {/* Mobile Thumbnails */}
+          {product.images.length > 1 && (
+            <div className="flex md:hidden gap-3 overflow-x-auto mt-4 w-full custom-scrollbar pb-2">
+              {product.images.map((img, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => setActiveImage(idx)}
+                  className={`w-20 aspect-square shrink-0 border-2 transition-all ${activeImage === idx ? 'border-pink-500' : 'border-gray-200'}`}
+                >
+                  <img src={img} className="w-full h-full object-contain" alt={`${product.name} thumbnail ${idx + 1}`} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Details */}
+        <div className="w-full md:w-1/3 flex flex-col">
+          <button 
+            onClick={onClose} 
+            className="self-start mb-6 text-sm text-gray-500 hover:text-pink-600 flex items-center gap-2 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver
+          </button>
+
+          <div className="mb-6">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">{product.category}</span>
+            <h1 className="text-2xl md:text-3xl font-serif text-gray-900 leading-tight mb-4">{product.name}</h1>
+            
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200">
+              <span className="text-3xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
+              {product.stock > 0 ? (
+                <span className="text-xs font-bold uppercase tracking-wider text-white bg-green-600 px-3 py-1 rounded-sm">En Stock</span>
+              ) : (
+                <span className="text-xs font-bold uppercase tracking-wider text-white bg-red-600 px-3 py-1 rounded-sm">Agotado</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mb-8 prose prose-sm text-gray-600">
+            <h3 className="text-sm font-bold text-gray-900 uppercase mb-2">Descripción</h3>
+            <p className="whitespace-pre-line">{product.description}</p>
+          </div>
+
+          <div className="mt-auto pt-6 border-t border-gray-200">
+            <button 
+              onClick={() => {
+                onAddToCart(product);
+                onClose();
+              }}
+              disabled={product.stock === 0}
+              className={`w-full py-4 rounded-sm font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-3 ${
+                product.stock > 0 
+                  ? 'bg-pink-500 hover:bg-pink-600 text-white shadow-sm hover:shadow-md' 
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {product.stock > 0 ? 'Agregar al Carrito' : 'Agotado'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

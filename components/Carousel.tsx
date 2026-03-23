@@ -29,7 +29,7 @@ const Carousel: React.FC<CarouselProps> = ({ images, interval }) => {
 
   return (
     <div 
-      className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl mb-12 group bg-pink-50"
+      className="relative w-full md:w-1/2 md:mx-auto aspect-video rounded-[2rem] overflow-hidden shadow-2xl mb-12 group bg-pink-50"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

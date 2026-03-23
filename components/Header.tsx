@@ -10,13 +10,14 @@ interface HeaderProps {
   isAdmin: boolean;
   onOpenSettings: () => void;
   onLogout: () => void;
+  onLoginClick: () => void;
   products: Product[];
   onSelectProduct: (product: Product) => void;
   onShowAllResults: (query: string) => void;
   onGoHome: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu, isAdmin, onOpenSettings, onLogout, products, onSelectProduct, onShowAllResults, onGoHome }) => {
+const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu, isAdmin, onOpenSettings, onLogout, onLoginClick, products, onSelectProduct, onShowAllResults, onGoHome }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -55,29 +56,31 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
   };
 
   return (
-    <header className="sticky top-4 z-40 mx-auto max-w-6xl px-4 transition-all duration-300">
-      <div className="glass-panel rounded-full h-20 px-4 sm:px-10 flex items-center justify-between shadow-lg shadow-pink-500/5 gap-2 sm:gap-4">
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+    <header className="relative z-40 w-full bg-white border-b border-gray-200">
+      <div className="w-full h-20 px-4 sm:px-8 flex items-center justify-between gap-4">
+        {/* Left: Logo & Mobile Menu */}
+        <div className="flex items-center gap-4 shrink-0">
           <button 
             onClick={onOpenMenu}
-            className="p-2 -ml-2 text-pink-900 hover:text-pink-600 transition-transform hover:scale-110 active:scale-95"
+            className="md:hidden p-2 -ml-2 text-gray-600 hover:text-pink-600 transition-colors"
             aria-label="Menú de categorías"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8h16M4 16h10" />
             </svg>
           </button>
           
-          <div className="flex flex-col hidden md:flex cursor-pointer" onClick={onGoHome}>
-            <span className="text-xl sm:text-2xl font-serif font-bold tracking-tight text-pink-900 leading-none">Coquet@s</span>
+          <div className="flex flex-col cursor-pointer" onClick={onGoHome}>
+            <span className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-pink-600 leading-none">Coquet@s</span>
           </div>
         </div>
 
-        <div className="flex-1 max-w-md relative" ref={searchRef}>
+        {/* Middle: Search Bar */}
+        <div className="flex-1 max-w-2xl relative hidden sm:block mx-4 lg:mx-8" ref={searchRef}>
           <div className="relative flex items-center w-full">
             <input 
               type="text"
-              placeholder="Buscar..."
+              placeholder="Estoy buscando..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -89,26 +92,28 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
                   handleShowAll();
                 }
               }}
-              className="w-full bg-white/50 border border-pink-200 rounded-full py-2 pl-4 pr-10 text-sm text-pink-900 placeholder-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all"
+              className="w-full bg-gray-50 border border-gray-300 rounded-none py-2.5 pl-4 pr-24 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-pink-500 focus:border-pink-500 transition-all"
             />
-            {searchQuery ? (
+            <button 
+              onClick={() => searchQuery ? handleShowAll() : null}
+              className="absolute right-0 top-0 bottom-0 bg-pink-500 hover:bg-pink-600 text-white px-6 font-medium text-sm transition-colors flex items-center justify-center"
+            >
+              Buscar
+            </button>
+            {searchQuery && (
               <button 
                 onClick={clearSearch}
-                className="absolute right-3 text-pink-400 hover:text-pink-600"
+                className="absolute right-24 text-gray-400 hover:text-gray-600"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute right-3 text-pink-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
             )}
           </div>
 
           {showSuggestions && searchQuery && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white/90 backdrop-blur-md border border-pink-100 rounded-2xl shadow-xl overflow-hidden z-50">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 shadow-xl overflow-hidden z-50">
               {filteredProducts.length > 0 ? (
                 <>
                   <ul className="max-h-60 overflow-y-auto py-2">
@@ -116,28 +121,28 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
                       <li key={product.id}>
                         <button
                           onClick={() => handleSelectProduct(product)}
-                          className="w-full text-left px-4 py-2 hover:bg-pink-50 flex items-center gap-3 transition-colors"
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 transition-colors"
                         >
                           {product.images?.[0] ? (
-                            <img src={product.images[0]} alt={product.name} className="w-8 h-8 rounded-md object-cover" />
+                            <img src={product.images[0]} alt={product.name} className="w-10 h-10 object-cover border border-gray-100" />
                           ) : (
-                            <div className="w-8 h-8 rounded-md bg-pink-100 flex items-center justify-center">
-                              <svg className="w-4 h-4 text-pink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <div className="w-10 h-10 bg-gray-100 flex items-center justify-center border border-gray-200">
+                              <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-pink-900 truncate">{product.name}</p>
-                            <p className="text-xs text-pink-500 font-bold">Gs. {product.price.toLocaleString('es-PY')}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                            <p className="text-xs text-pink-600 font-bold">Gs. {product.price.toLocaleString('es-PY')}</p>
                           </div>
                         </button>
                       </li>
                     ))}
                   </ul>
                   {allMatches.length > 4 && (
-                    <div className="border-t border-pink-100 p-2 bg-pink-50/50">
+                    <div className="border-t border-gray-100 p-2 bg-gray-50">
                       <button 
                         onClick={handleShowAll}
-                        className="w-full text-center text-xs font-bold text-pink-600 hover:text-pink-800 py-2 uppercase tracking-wide"
+                        className="w-full text-center text-xs font-bold text-gray-600 hover:text-gray-900 py-2 uppercase tracking-wide"
                       >
                         Ver todos los resultados ({allMatches.length})
                       </button>
@@ -145,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
                   )}
                 </>
               ) : (
-                <div className="p-4 text-center text-sm text-pink-500">
+                <div className="p-4 text-center text-sm text-gray-500">
                   No se encontraron productos.
                 </div>
               )}
@@ -153,37 +158,63 @@ const Header: React.FC<HeaderProps> = ({ mode, cartCount, onOpenCart, onOpenMenu
           )}
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-4 shrink-0">
-          {isAdmin && mode === UserMode.ADMIN && (
-            <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2 border-r pr-2 sm:pr-3 border-pink-200/50">
-              <button onClick={onOpenSettings} className="sm:hidden p-2 text-pink-500 hover:text-pink-700 transition-colors" title="Configuración">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
-              <button onClick={onLogout} className="sm:hidden p-2 text-red-400 hover:text-red-600 transition-colors" title="Salir">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
-              <button onClick={onOpenSettings} className="hidden sm:block text-[10px] font-black tracking-wider text-pink-400 hover:text-pink-700 mr-3">CONFIG</button>
-              <button onClick={onLogout} className="hidden sm:block text-[10px] font-black tracking-wider text-red-400 hover:text-red-600">SALIR</button>
-            </div>
-          )}
-
+        {/* Right: Cart & Login */}
+        <div className="flex items-center gap-4 sm:gap-6 shrink-0">
           <button 
             onClick={onOpenCart}
-            className="relative p-2 sm:p-3 rounded-full hover:bg-white/40 transition-all hover:scale-105 active:scale-95 group"
+            className="relative p-2 hover:bg-gray-100 transition-colors group flex items-center gap-2"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-pink-900 group-hover:text-pink-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700 group-hover:text-black transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             {cartCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 sm:top-1.5 sm:right-1.5 bg-pink-500 text-white text-[9px] font-bold h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+              <span className="absolute top-0 right-0 bg-pink-600 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full">
                 {cartCount}
               </span>
             )}
+          </button>
+
+          <div className="h-8 w-px bg-gray-300 hidden sm:block"></div>
+
+          {isAdmin && mode === UserMode.ADMIN ? (
+            <div className="flex items-center gap-3">
+              <button onClick={onOpenSettings} className="text-sm font-medium text-gray-600 hover:text-black transition-colors">Configuración</button>
+              <button onClick={onLogout} className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors">Salir</button>
+            </div>
+          ) : (
+            <button onClick={onLoginClick} className="flex items-center gap-2 text-left group">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 group-hover:text-black transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <div className="hidden sm:block">
+                <p className="text-xs text-gray-500 leading-tight">Para funcionarios</p>
+                <p className="text-sm font-medium text-gray-900 leading-tight group-hover:text-pink-600 transition-colors">Iniciar sesión</p>
+              </div>
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {/* Mobile Search Bar (visible only on small screens) */}
+      <div className="sm:hidden px-4 pb-4 w-full">
+        <div className="relative flex items-center w-full">
+          <input 
+            type="text"
+            placeholder="Estoy buscando..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchQuery) {
+                handleShowAll();
+              }
+            }}
+            className="w-full bg-gray-50 border border-gray-300 rounded-none py-2 pl-4 pr-20 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-pink-500 focus:border-pink-500"
+          />
+          <button 
+            onClick={() => searchQuery ? handleShowAll() : null}
+            className="absolute right-0 top-0 bottom-0 bg-pink-500 hover:bg-pink-600 text-white px-4 font-medium text-sm transition-colors flex items-center justify-center"
+          >
+            Buscar
           </button>
         </div>
       </div>
